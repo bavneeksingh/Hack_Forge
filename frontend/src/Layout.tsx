@@ -99,7 +99,6 @@ const navItems = {
     { path: '/apply', label: 'Apply for Leave', Icon: Icons.Apply },
     { path: '/requests', label: 'My Requests', Icon: Icons.Requests },
     { path: '/balance', label: 'My Balance', Icon: Icons.Balance },
-    { path: '/workload', label: 'Workload Planner', Icon: Icons.Workload },
     { path: '/team-calendar', label: 'Team Calendar', Icon: Icons.Calendar },
     { path: '/hr-queue', label: 'HR Queue', Icon: Icons.Queue },
     { path: '/all-balances', label: 'All Balances', Icon: Icons.Balance },

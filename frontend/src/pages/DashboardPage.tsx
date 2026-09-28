@@ -9,7 +9,8 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isManager = user?.role === 'MANAGER' || user?.role === 'HR';
+  const isManagerOrHr = user?.role === 'MANAGER' || user?.role === 'HR';
+  const isManagerRole = user?.role === 'MANAGER';
   const isHr = user?.role === 'HR';
 
   const { data: leaves } = useQuery({
@@ -25,7 +26,7 @@ export default function DashboardPage() {
   const { data: managerPending } = useQuery({
     queryKey: ['manager-pending'],
     queryFn: () => api.get<LeaveRequestDto[]>('/manager/pending').then((r) => r.data),
-    enabled: isManager,
+    enabled: isManagerOrHr,
     refetchInterval: 10000,
   });
 
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const { data: workloads } = useQuery({
     queryKey: ['manager-workloads'],
     queryFn: () => api.get<WeeklyWorkloadDto[]>('/manager/workloads').then((r) => r.data),
-    enabled: isManager,
+    enabled: isManagerRole,
   });
 
   const pending = leaves?.filter((l) => l.status.includes('PENDING')).length || 0;
@@ -63,7 +64,7 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="stat-grid" style={{ marginBottom: '2rem' }}>
-        {isManager && (
+        {isManagerOrHr && (
           <div
             className="stat-card"
             style={{
@@ -103,7 +104,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Manager / HR Team Pending Approvals Section */}
-      {isManager && managerPending && managerPending.length > 0 && (
+      {isManagerOrHr && managerPending && managerPending.length > 0 && (
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -173,8 +174,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Manager / HR Weekly Workload & Dynamic Thresholds Section */}
-      {isManager && (
+      {/* Manager Weekly Workload & Dynamic Thresholds Section (Managers only) */}
+      {isManagerRole && (
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
