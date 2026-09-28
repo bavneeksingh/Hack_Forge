@@ -105,6 +105,9 @@ public class LeaveService {
         }
         request.setDueAt(Instant.now(clock).plus(timeoutHours, ChronoUnit.HOURS));
 
+        // Save first so it has an ID before creating ApprovalHistory
+        request = leaveRequestRepository.save(request);
+
         // Transition via state machine (status: null -> PENDING_MANAGER)
         stateMachine.transition(request, LeaveAction.SUBMIT, requester, null);
 
