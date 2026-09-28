@@ -21,10 +21,22 @@ import java.util.List;
 public class BalanceService {
 
     private final LeaveBalanceRepository balanceRepository;
+    private final UserRepository userRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
     private final Clock clock;
 
     public BalanceService(LeaveBalanceRepository balanceRepository, Clock clock) {
+        this(balanceRepository, null, null, clock);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BalanceService(LeaveBalanceRepository balanceRepository,
+                          UserRepository userRepository,
+                          LeaveTypeRepository leaveTypeRepository,
+                          Clock clock) {
         this.balanceRepository = balanceRepository;
+        this.userRepository = userRepository;
+        this.leaveTypeRepository = leaveTypeRepository;
         this.clock = clock;
     }
 
