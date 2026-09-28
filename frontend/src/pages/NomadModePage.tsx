@@ -6,19 +6,15 @@ import { useToast } from '../toast';
 import { useAuth } from '../auth';
 
 const PRESET_DESTINATIONS = [
-  { city: 'Tokyo', country: 'Japan', timezone: 'Asia/Tokyo', icon: '⛩️', offset: '+3.5h' },
-  { city: 'Bali', country: 'Indonesia', timezone: 'Asia/Makassar', icon: '🌴', offset: '+2.5h' },
-  { city: 'London', country: 'United Kingdom', timezone: 'Europe/London', icon: '☕', offset: '-4.5h' },
-  { city: 'Dubai', country: 'UAE', timezone: 'Asia/Dubai', icon: '🏙️', offset: '-1.5h' },
-  { city: 'Singapore', country: 'Singapore', timezone: 'Asia/Singapore', icon: '🦁', offset: '+2.5h' },
-  { city: 'Paris', country: 'France', timezone: 'Europe/Paris', icon: '🥐', offset: '-3.5h' },
   { city: 'New York', country: 'USA', timezone: 'America/New_York', icon: '🗽', offset: '-9.5h' },
-  { city: 'Lisbon', country: 'Portugal', timezone: 'Europe/Lisbon', icon: '🍷', offset: '-4.5h' },
-  { city: 'Bangkok', country: 'Thailand', timezone: 'Asia/Bangkok', icon: '🐘', offset: '+1.5h' },
-  { city: 'Zurich', country: 'Switzerland', timezone: 'Europe/Zurich', icon: '🏔️', offset: '-3.5h' },
+  { city: 'San Francisco', country: 'USA', timezone: 'America/Los_Angeles', icon: '🌉', offset: '-12.5h' },
+  { city: 'Chicago', country: 'USA', timezone: 'America/Chicago', icon: '🏙️', offset: '-10.5h' },
+  { city: 'Austin', country: 'USA', timezone: 'America/Chicago', icon: '🤠', offset: '-10.5h' },
+  { city: 'Seattle', country: 'USA', timezone: 'America/Los_Angeles', icon: '🌲', offset: '-12.5h' },
+  { city: 'Miami', country: 'USA', timezone: 'America/New_York', icon: '🏖️', offset: '-9.5h' },
 ];
 
-const ICONS = ['🌴', '✈️', '⛩️', '☕', '🏖️', '🗺️', '🎒', '🏔️', '🏙️', '🥐', '🏄‍♂️', '💻'];
+const ICONS = ['🗽', '🌉', '🏙️', '🤠', '🌲', '🏖️', '🌴', '✈️', '☕', '🎒', '💻'];
 
 export default function NomadModePage() {
   const toast = useToast();
@@ -30,13 +26,13 @@ export default function NomadModePage() {
   const today = new Date().toISOString().split('T')[0];
   const defaultEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  const [city, setCity] = useState('Tokyo');
-  const [country, setCountry] = useState('Japan');
-  const [timezone, setTimezone] = useState('Asia/Tokyo');
+  const [city, setCity] = useState('New York');
+  const [country, setCountry] = useState('USA');
+  const [timezone, setTimezone] = useState('America/New_York');
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(defaultEnd);
-  const [statusIcon, setStatusIcon] = useState('🌴');
-  const [statusMessage, setStatusMessage] = useState('Taking nomad leave from Tokyo hub! Reachable on urgent matters.');
+  const [statusIcon, setStatusIcon] = useState('🗽');
+  const [statusMessage, setStatusMessage] = useState('Taking nomad leave in New York, USA! Reachable on urgent matters.');
 
   // Reject comment state for managers
   const [rejectNomadId, setRejectNomadId] = useState<number | null>(null);
@@ -319,10 +315,10 @@ export default function NomadModePage() {
         </div>
       )}
 
-      {/* Preset Destinations Quick Select */}
+      {/* Preset USA Destinations Quick Select */}
       <div style={{ marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span>✈️</span> Popular Nomad Destinations (Quick Select)
+          <span>🇺🇸</span> Popular USA Destinations (Quick Select)
         </h3>
         <div style={{ display: 'flex', gap: '0.625rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           {PRESET_DESTINATIONS.map((preset) => {
