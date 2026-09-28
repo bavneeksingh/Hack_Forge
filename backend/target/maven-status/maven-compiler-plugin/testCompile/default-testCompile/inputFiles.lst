@@ -1,15 +1,6 @@
-<<<<<<< HEAD
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\service\BalanceServiceTest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\service\ConflictServiceTest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\service\EscalationServiceTest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\service\LeaveStateMachineTest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\service\WorkingDayServiceTest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\test\java\com\leavemanager\StoryIntegrationTest.java
-=======
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/StoryIntegrationTest.java
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/service/BalanceServiceTest.java
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/service/ConflictServiceTest.java
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/service/EscalationServiceTest.java
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/service/LeaveStateMachineTest.java
-/Users/bavneeksinghkala/Desktop/Hack_Forge/backend/src/test/java/com/leavemanager/service/WorkingDayServiceTest.java
->>>>>>> e35262da7ca89f841dee48b666c098266f87b02c

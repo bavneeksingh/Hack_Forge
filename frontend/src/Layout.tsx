@@ -100,32 +100,49 @@ export default function Layout() {
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1 }}>
-          {items.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.85rem',
-                padding: '0.85rem 1.25rem',
-                margin: '0.25rem 0',
-                borderRadius: '99px',
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)',
-                background: isActive ? 'var(--color-primary)' : 'transparent',
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-              })}
-            >
-              <span style={{ fontSize: '1.2rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
->>>>>>> e35262da7ca89f841dee48b666c098266f87b02c
+        <nav style={{ flex: 1, padding: '0 0.75rem' }}>
+          {items.map((item) => {
+            const badgeCount = getBadgeCount(item.path);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                style={({ isActive }) => ({
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.85rem',
+                  padding: '0.85rem 1.25rem',
+                  margin: '0.25rem 0',
+                  borderRadius: '99px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)',
+                  background: isActive ? 'var(--color-primary)' : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                })}
+              >
+                <span style={{ fontSize: '1.2rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {badgeCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--color-warning)',
+                      color: '#0f172a',
+                      fontSize: '0.6875rem',
+                      fontWeight: 700,
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '999px',
+                      boxShadow: '0 0 8px rgba(245, 158, 11, 0.4)',
+                    }}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* User info */}
@@ -137,24 +154,44 @@ export default function Layout() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              background: 'var(--color-primary)', color: 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 'bold', fontSize: '1.1rem'
-            }}>
-              {user?.name?.charAt(0)}
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'var(--color-primary)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '1.1rem',
+              }}
+            >
+              {user?.name?.charAt(0) || 'U'}
             </div>
             <div>
               <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>
                 {user?.name}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  fontWeight: 600,
+                }}
+              >
                 {user?.role}
               </div>
             </div>
           </div>
-          <button onClick={handleLogout} className="btn btn-ghost btn-sm" style={{ width: '100%', border: '1px solid var(--color-border)' }}>
+          <button
+            onClick={handleLogout}
+            className="btn btn-ghost btn-sm"
+            style={{ width: '100%', border: '1px solid var(--color-border)' }}
+          >
             Sign out
           </button>
         </div>
