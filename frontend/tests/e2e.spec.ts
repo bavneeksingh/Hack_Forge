@@ -4,24 +4,14 @@ test.describe('Leave Management System E2E', () => {
 
   test('Employee can apply, Manager approves, Escalation happens, HR finalizes, Employee cancels', async ({ page }) => {
     
-    // a. Arun logs in, dashboard shows 12 pro-rated days.
-    await page.goto('/login');
-    await page.fill('input[type="email"]', 'charlie@company.com');
-    await page.fill('input[type="password"]', 'password123');
-    await page.click('button[type="submit"]');
-
-    // Wait for dashboard to load
-    await expect(page).toHaveURL('/dashboard');
-    // We expect to see 24 days for Charlie, but the story says Arun sees 12 days.
-    // In our seed, Frank is the one with 12 days pro-rated (joined Jul 2026).
-    // Let's test with Frank (frank@company.com)
-    
-    await page.click('text=Logout'); // Wait, let's just log in as Frank directly
+    // a. Frank logs in, dashboard shows 12 pro-rated days.
     await page.goto('/login');
     await page.fill('input[type="email"]', 'frank@company.com');
     await page.fill('input[type="password"]', 'password123');
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/dashboard');
+
+    // Wait for dashboard to load
+    await expect(page).toHaveURL('/');
 
     // Ensure Balance shows 12
     await expect(page.locator('text=Annual Leave')).toBeVisible();

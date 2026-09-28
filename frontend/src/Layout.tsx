@@ -103,6 +103,7 @@ export default function Layout() {
 
         {/* Navigation */}
         <nav style={{ flex: 1 }}>
+<<<<<<< HEAD
           {items.map((item) => {
             const badgeCount = getBadgeCount(item.path);
             return (
@@ -145,6 +146,32 @@ export default function Layout() {
               </NavLink>
             );
           })}
+=======
+          {items.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === '/'}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1.25rem',
+                margin: '0.125rem 0.75rem',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                background: isActive ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+              })}
+            >
+              <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
+>>>>>>> e35262da7ca89f841dee48b666c098266f87b02c
         </nav>
 
         {/* User info */}
