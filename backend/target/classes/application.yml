@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+app:
+  jwt:
+    secret: "dGhpcyBpcyBhIHZlcnkgbG9uZyBzZWNyZXQga2V5IGZvciBKV1QgdG9rZW4gc2lnbmluZyBpbiB0aGUgbGVhdmUgbWFuYWdlciBhcHBsaWNhdGlvbg=="
+    expiration-ms: 86400000  # 24 hours
