@@ -41,8 +41,8 @@
 | Category | Features |
 |----------|----------|
 | **Employee** | Apply for leave · Preview working days & conflicts · View balances · Track request status · Cancel requests · Team calendar |
-| **Manager** | Approve/reject team requests · View pending queue · Team calendar overview · Escalation notifications |
-| **HR** | Final approval queue · Organization-wide balances · Policy configuration · Audit trail · Filterable queue |
+| **Manager** | Approve/reject team requests · View pending queue · Team calendar overview · Escalation notifications · Mid-joining leave calculator & push balance |
+| **HR** | Final approval queue · Organization-wide balances · Policy configuration · Audit trail · Filterable queue · Mid-joining leave calculator & org-wide recalibration |
 | **System** | JWT authentication · Auto-escalation scheduler · Conflict detection · Working day calculator · Public holiday support · Flyway migrations |
 
 ---
@@ -566,8 +566,15 @@ All endpoints are prefixed with `/api` (configured via `server.servlet.context-p
 | `POST` | `/api/hr/leaves/:id/reject` | Final rejection (comment required) | ✅ HR |
 | `GET` | `/api/hr/balances` | All employee balances | ✅ HR |
 | `GET` | `/api/hr/policies` | Team policies | ✅ HR |
-| `PUT` | `/api/hr/policies/:teamId` | Update team policy | ✅ HR |
 | `GET` | `/api/hr/audit` | Audit trail | ✅ HR |
+
+### Mid-Joining Calculator (Manager & HR)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/api/calculator/preview` | Preview pro-rated leave calculations for any join date | ✅ MANAGER / HR |
+| `GET` | `/api/calculator/users` | Organization members with current & calculated pro-rated leaves | ✅ MANAGER / HR |
+| `POST` | `/api/calculator/push-balance` | Push mid-joining calculated leaves to member balance | ✅ MANAGER / HR |
+| `POST` | `/api/calculator/recalibrate-all` | Batch recalibrate and push for all mid-year joiners | ✅ HR |
 
 ---
 
@@ -671,12 +678,15 @@ All demo accounts use the password: **`password123`**
 |------|-------|------|------|
 | 🏛️ HR | `hr.helen@company.com` | Helen HR | — |
 | 🏛️ HR | `hr.ivan@company.com` | Ivan HR | — |
+| 🏛️ HR | `harper.hr@company.com` | Harper HR (Joined Sep 2026) | — |
 | 👔 Manager | `alice.manager@company.com` | Alice Manager | Engineering |
 | 👔 Manager | `bob.manager@company.com` | Bob Manager | Design |
+| 👔 Manager | `marcus.manager@company.com` | Marcus Manager (Joined Aug 2026) | Design |
 | 👤 Employee | `charlie@company.com` | Charlie Dev | Engineering |
 | 👤 Employee | `diana@company.com` | Diana Dev | Engineering |
 | 👤 Employee | `eve@company.com` | Eve Designer | Design |
-| 👤 Employee | `frank@company.com` | Frank Dev | Engineering |
+| 👤 Employee | `frank@company.com` | Frank Dev (Joined Jul 2026) | Engineering |
+| 👤 Employee | `george.dev@company.com` | George Dev (Joined May 2026) | Engineering |
 
 ### Team Hierarchy
 

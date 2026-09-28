@@ -34,6 +34,9 @@ export default function LoginPage() {
     { email: 'charlie@company.com', label: 'Charlie (Employee)', role: 'EMPLOYEE' },
     { email: 'alice.manager@company.com', label: 'Alice (Manager)', role: 'MANAGER' },
     { email: 'hr.helen@company.com', label: 'Helen (HR)', role: 'HR' },
+    { email: 'george.dev@company.com', label: 'George (Mid-Join Dev)', role: 'EMPLOYEE' },
+    { email: 'marcus.manager@company.com', label: 'Marcus (Mid-Join Mgr)', role: 'MANAGER' },
+    { email: 'harper.hr@company.com', label: 'Harper (Mid-Join HR)', role: 'HR' },
   ];
 
   return (

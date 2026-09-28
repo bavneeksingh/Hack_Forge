@@ -157,15 +157,21 @@ public class BalanceService {
      * entitled = round_to_half(annualEntitlement * remainingMonths / 12)
      * remainingMonths = 12 - (joinMonth - 1) = 13 - joinMonth (counting from joining month inclusive)
      */
-    BigDecimal calculateEntitlement(User employee, LeaveType leaveType, int year) {
+    public BigDecimal calculateEntitlement(User employee, LeaveType leaveType, int year) {
+        return calculateEntitlementForDate(employee.getJoinDate(), leaveType, year);
+    }
+
+    public BigDecimal calculateEntitlementForDate(LocalDate joinDate, LeaveType leaveType, int year) {
         BigDecimal annual = BigDecimal.valueOf(leaveType.getAnnualEntitlement());
 
-        if (employee.getJoinDate().getYear() == year) {
-            int joinMonth = employee.getJoinDate().getMonthValue();
+        if (joinDate.getYear() == year) {
+            int joinMonth = joinDate.getMonthValue();
             int remainingMonths = 13 - joinMonth; // inclusive of joining month
             BigDecimal proRated = annual.multiply(BigDecimal.valueOf(remainingMonths))
                     .divide(BigDecimal.valueOf(12), 1, RoundingMode.HALF_UP);
             return roundToHalf(proRated);
+        } else if (joinDate.getYear() > year) {
+            return BigDecimal.ZERO;
         }
 
         return annual;
@@ -174,9 +180,20 @@ public class BalanceService {
     /**
      * Rounds to nearest 0.5: e.g., 11.3 -> 11.5, 11.7 -> 11.5, 11.8 -> 12.0
      */
-    private BigDecimal roundToHalf(BigDecimal value) {
+    public BigDecimal roundToHalf(BigDecimal value) {
         BigDecimal doubled = value.multiply(BigDecimal.valueOf(2));
         BigDecimal rounded = doubled.setScale(0, RoundingMode.HALF_UP);
         return rounded.divide(BigDecimal.valueOf(2), 1, RoundingMode.HALF_UP);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public LeaveBalance setEntitlement(User user, LeaveType leaveType, int year, BigDecimal newEntitled) {
+        LeaveBalance balance = balanceRepository.findByEmployeeIdAndLeaveTypeIdAndYear(
+                user.getId(), leaveType.getId(), year
+        ).orElseGet(() -> new LeaveBalance(user, leaveType, year, newEntitled));
+
+        balance.setEntitled(newEntitled);
+        return balanceRepository.save(balance);
+    }
 }
+

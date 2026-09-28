@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import api from '../api';
 import type { BalanceDto } from '../types';
 
@@ -160,6 +161,14 @@ export default function AllBalancesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+
+          <Link
+            to="/calculator"
+            className="btn btn-primary"
+            style={{ padding: '0.45rem 1.15rem', fontSize: '0.8125rem', textDecoration: 'none', borderRadius: '10px' }}
+          >
+            Adjust Balances
+          </Link>
         </div>
       </div>
 

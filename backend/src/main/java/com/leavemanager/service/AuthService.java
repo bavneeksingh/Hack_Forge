@@ -56,7 +56,8 @@ public class AuthService {
                 user.getManager() != null ? user.getManager().getId() : null,
                 user.getManager() != null ? user.getManager().getName() : null,
                 user.getTeam() != null ? user.getTeam().getId() : null,
-                user.getTeam() != null ? user.getTeam().getName() : null
+                user.getTeam() != null ? user.getTeam().getName() : null,
+                user.getJoinDate()
         );
     }
 }

@@ -4,10 +4,11 @@ export interface UserDto {
   email: string;
   name: string;
   role: 'EMPLOYEE' | 'MANAGER' | 'HR';
-  teamId?: number;
-  teamName?: string;
-  managerId?: number;
-  managerName?: string;
+  teamId?: number | null;
+  teamName?: string | null;
+  managerId?: number | null;
+  managerName?: string | null;
+  joinDate?: string;
 }
 
 export type User = UserDto;
@@ -158,3 +159,63 @@ export interface TeamCalendarEntry {
   endDate: string;
   status: string;
 }
+
+export interface MonthAccrualDto {
+  month: number;
+  monthName: string;
+  active: boolean;
+  accruedDays: number;
+}
+
+export interface MidJoiningCalculationDto {
+  leaveTypeId: number;
+  leaveTypeName: string;
+  annualEntitlement: number;
+  proRatedEntitlement: number;
+  adjustedDays: number;
+  remainingMonths: number;
+  joinMonth: number;
+  monthlyAccrualRate: number;
+  formula: string;
+  monthlyBreakdown: MonthAccrualDto[];
+}
+
+export interface MidJoiningPreviewResponse {
+  joinDate: string;
+  year: number;
+  remainingMonths: number;
+  totalAnnualDays: number;
+  totalProRatedDays: number;
+  totalAdjustedDays: number;
+  calculations: MidJoiningCalculationDto[];
+}
+
+export interface UserAdjustmentDto {
+  id: number;
+  name: string;
+  email: string;
+  role: 'EMPLOYEE' | 'MANAGER' | 'HR';
+  teamName: string;
+  managerName: string;
+  joinDate: string;
+  joinedInTargetYear: boolean;
+  currentBalances: BalanceDto[];
+  calculatedEntitlements: MidJoiningCalculationDto[];
+}
+
+export interface AdjustBalanceRequest {
+  userId: number;
+  joinDate?: string;
+  year?: number;
+  leaveTypeEntitlements?: Record<number, number>;
+  comment?: string;
+}
+
+export interface BatchRecalibrateResponse {
+  year: number;
+  totalUsersChecked: number;
+  usersAdjusted: number;
+  adjustedUsers: UserAdjustmentDto[];
+  message: string;
+}
+
