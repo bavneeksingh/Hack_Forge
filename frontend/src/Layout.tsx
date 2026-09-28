@@ -11,6 +11,7 @@ const navItems = {
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
     { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
+    { path: '/nomad', label: 'Nomad Mode', icon: '🌴' },
   ],
   MANAGER: [
     { path: '/', label: 'Dashboard', icon: '◈' },
@@ -19,6 +20,7 @@ const navItems = {
     { path: '/balance', label: 'My Balance', icon: '◎' },
     { path: '/approvals', label: 'Approvals', icon: '✓' },
     { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
+    { path: '/nomad', label: 'Nomad Mode', icon: '🌴' },
   ],
   HR: [
     { path: '/', label: 'Dashboard', icon: '◈' },
@@ -26,6 +28,7 @@ const navItems = {
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
     { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
+    { path: '/nomad', label: 'Nomad Mode', icon: '🌴' },
     { path: '/hr-queue', label: 'HR Queue', icon: '⚑' },
     { path: '/all-balances', label: 'All Balances', icon: '◎' },
     { path: '/policies', label: 'Policies', icon: '⚙' },
@@ -53,6 +56,11 @@ export default function Layout() {
     queryFn: () => api.get<LeaveRequestDto[]>('/hr/pending', { params: { filter: 'ALL' } }).then((r) => r.data),
     enabled: isHr,
     refetchInterval: 10000,
+  });
+
+  const { data: activeWorkation } = useQuery({
+    queryKey: ['active-workation'],
+    queryFn: () => api.get('/workations/active').then((r) => r.data).catch(() => null),
   });
 
   const handleLogout = () => {
@@ -155,6 +163,32 @@ export default function Layout() {
             marginTop: 'auto',
           }}
         >
+          {activeWorkation && (
+            <div
+              style={{
+                marginBottom: '0.875rem',
+                padding: '0.4rem 0.6rem',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                color: '#047857',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+              }}
+              onClick={() => navigate('/nomad')}
+              title={`Nomad Mode active: ${activeWorkation.city} (${activeWorkation.teamConvertedHours})`}
+            >
+              <span>{activeWorkation.statusIcon}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Nomad: {activeWorkation.city}
+              </span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div
               style={{

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import type { TeamCalendarDto, TeamCalendarEntry } from '../types';
+import type { TeamCalendarDto, TeamCalendarEntry, WorkationCalendarEntry } from '../types';
 
 export default function TeamCalendarPage() {
   const navigate = useNavigate();
@@ -35,13 +35,24 @@ export default function TeamCalendarPage() {
     'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
-  // Teammates map
+  // Teammates map (leaves)
   const byEmployee = new Map<string, TeamCalendarEntry[]>();
 
   calendar?.entries.forEach((e) => {
     const arr = byEmployee.get(e.employeeName) || [];
     arr.push(e);
     byEmployee.set(e.employeeName, arr);
+  });
+
+  // Also include teammates who have active/scheduled workations
+  const workationsByEmployee = new Map<string, WorkationCalendarEntry[]>();
+  calendar?.workations?.forEach((w) => {
+    const arr = workationsByEmployee.get(w.employeeName) || [];
+    arr.push(w);
+    workationsByEmployee.set(w.employeeName, arr);
+    if (!byEmployee.has(w.employeeName)) {
+      byEmployee.set(w.employeeName, []);
+    }
   });
 
   const canGoPrev = !isCurrentMonth && !(year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth()));
@@ -78,6 +89,10 @@ export default function TeamCalendarPage() {
     const holiday = calendar?.holidays?.find((h) => h.date === dateStr);
     const awayEntries = calendar?.entries.filter(
       (e) => dateStr >= e.startDate && dateStr <= e.endDate
+    ) || [];
+
+    const nomadEntries = calendar?.workations?.filter(
+      (w) => dateStr >= w.startDate && dateStr <= w.endDate
     ) || [];
 
     const awayCount = awayEntries.length;
@@ -119,6 +134,7 @@ export default function TeamCalendarPage() {
       isWeekend,
       holiday,
       awayEntries,
+      nomadEntries,
       awayCount,
       isConflict,
       isModerate,
@@ -260,7 +276,7 @@ export default function TeamCalendarPage() {
             {/* Teammates away details */}
             {activeDay.awayEntries.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Teammates Away:</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Teammates on PTO:</span>
                 {activeDay.awayEntries.map((e) => (
                   <span
                     key={e.leaveRequestId}
@@ -279,6 +295,49 @@ export default function TeamCalendarPage() {
                     <strong>{e.employeeName}</strong> ({e.leaveType} • {e.status})
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Teammates on Nomad Mode Leave */}
+            {activeDay.nomadEntries && activeDay.nomadEntries.length > 0 && (
+              <div style={{ marginTop: '0.875rem', padding: '0.625rem 0.875rem', background: 'rgba(59, 107, 122, 0.08)', borderRadius: '8px', border: '1px solid rgba(59, 107, 122, 0.25)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-secondary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>🌴</span> Teammates on Approved Nomad Leave:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {activeDay.nomadEntries.map((w) => (
+                    <div
+                      key={w.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                        fontSize: '0.8125rem',
+                        color: 'var(--color-text)',
+                        background: 'var(--color-surface)',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--color-border)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>{w.statusIcon}</span>
+                        <div>
+                          <div><strong>{w.employeeName}</strong> in <span style={{ color: 'var(--color-primary-light)' }}>{w.city}, {w.country}</span> (Nomad Leave)</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                            🌐 Destination: {w.localDatesDisplay || `${w.startDate} → ${w.endDate} (${w.city})`}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-secondary)', flexWrap: 'wrap' }}>
+                        <span>🏢 <strong>Base HQ Period:</strong> <strong style={{ color: 'var(--color-accent)' }}>{w.teamDatesDisplay || `${w.startDate} → ${w.endDate} (IST)`}</strong></span>
+                        <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>⏱️ {w.timeGapDescription || `${(w.timeDiffHours ?? 0) >= 0 ? `+${w.timeDiffHours ?? 0}` : w.timeDiffHours}h vs Base`}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -306,6 +365,9 @@ export default function TeamCalendarPage() {
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span> Available
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3B6B7A' }}></span> 🌴 Nomad Mode
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }}></span> Moderate
@@ -469,7 +531,47 @@ export default function TeamCalendarPage() {
                   const date = new Date(year, month, d);
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                   const entry = entries.find((e) => dateStr >= e.startDate && dateStr <= e.endDate);
+                  const workation = workationsByEmployee.get(name)?.find((w) => dateStr >= w.startDate && dateStr <= w.endDate);
                   const holiday = calendar?.holidays?.find((h) => h.date === dateStr);
+
+                  let cellBg = 'transparent';
+                  let cellColor = 'inherit';
+                  let cellBorderLeft = 'none';
+                  let cellTitle = `${name} working on ${dateStr}`;
+                  let cellContent: React.ReactNode = null;
+
+                  if (entry) {
+                    cellBg = entry.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)';
+                    cellColor = entry.status === 'APPROVED' ? '#047857' : '#b45309';
+                    cellBorderLeft = dateStr === entry.startDate ? `3px solid ${statusColors[entry.status]}` : 'none';
+                    cellTitle = `${name}: ${entry.leaveType} (${entry.status}) from ${entry.startDate} to ${entry.endDate}`;
+                    if (dateStr === entry.startDate) {
+                      cellContent = (
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>
+                          {entry.leaveType.split(' ')[0]}
+                        </span>
+                      );
+                    }
+                  } else if (workation) {
+                    cellBg = 'rgba(59, 107, 122, 0.18)';
+                    cellColor = 'var(--color-secondary)';
+                    cellBorderLeft = dateStr === workation.startDate ? '3px solid var(--color-secondary)' : 'none';
+                    cellTitle = `${name}: ${workation.statusIcon} Nomad Leave in ${workation.city}, ${workation.country} • Base HQ Period: ${workation.teamDatesDisplay || workation.startDate} (${workation.timeGapDescription || ''})`;
+                    if (dateStr === workation.startDate) {
+                      cellContent = (
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px', fontWeight: 700 }}>
+                          {workation.statusIcon} {workation.city}
+                        </span>
+                      );
+                    }
+                  } else if (holiday) {
+                    cellBg = 'rgba(139, 92, 246, 0.08)';
+                    cellTitle = `Holiday: ${holiday.name}`;
+                  } else if (isWeekend) {
+                    cellBg = 'rgba(100, 116, 139, 0.05)';
+                  } else if (isSelected) {
+                    cellBg = 'rgba(99, 102, 241, 0.08)';
+                  }
 
                   return (
                     <div
@@ -477,17 +579,9 @@ export default function TeamCalendarPage() {
                       onClick={() => setSelectedDate(dateStr)}
                       style={{
                         height: '32px',
-                        background: entry
-                          ? entry.status === 'APPROVED'
-                            ? 'rgba(16, 185, 129, 0.4)'
-                            : 'rgba(245, 158, 11, 0.4)'
-                          : holiday
-                          ? 'rgba(139, 92, 246, 0.08)'
-                          : isWeekend
-                          ? 'rgba(100, 116, 139, 0.05)'
-                          : isSelected
-                          ? 'rgba(99, 102, 241, 0.08)'
-                          : 'transparent',
+                        background: cellBg,
+                        color: cellColor,
+                        borderLeft: cellBorderLeft,
                         borderRadius: '4px',
                         margin: '1px 0',
                         cursor: 'pointer',
@@ -496,24 +590,12 @@ export default function TeamCalendarPage() {
                         justifyContent: 'center',
                         fontSize: '0.65rem',
                         fontWeight: 600,
-                        color: entry?.status === 'APPROVED' ? '#047857' : entry ? '#b45309' : 'inherit',
-                        borderLeft: entry && dateStr === entry.startDate ? `3px solid ${statusColors[entry.status]}` : 'none',
                         outline: isSelected ? '1px solid rgba(99, 102, 241, 0.5)' : 'none',
                         transition: 'all 0.15s ease',
                       }}
-                      title={
-                        entry
-                          ? `${name}: ${entry.leaveType} (${entry.status}) from ${entry.startDate} to ${entry.endDate}`
-                          : holiday
-                          ? `Holiday: ${holiday.name}`
-                          : `${name} working on ${dateStr}`
-                      }
+                      title={cellTitle}
                     >
-                      {entry && dateStr === entry.startDate && (
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>
-                          {entry.leaveType.split(' ')[0]}
-                        </span>
-                      )}
+                      {cellContent}
                     </div>
                   );
                 })}

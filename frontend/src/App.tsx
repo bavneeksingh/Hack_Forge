@@ -14,6 +14,7 @@ import AllBalancesPage from './pages/AllBalancesPage';
 import PoliciesPage from './pages/PoliciesPage';
 import AuditLogPage from './pages/AuditLogPage';
 import LeaveDetailPage from './pages/LeaveDetailPage';
+import NomadModePage from './pages/NomadModePage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="balance" element={<BalancePage />} />
               
               <Route path="team-calendar" element={<TeamCalendarPage />} />
+              <Route path="nomad" element={<NomadModePage />} />
               
               {/* Manager routes (accessible to MANAGER and HR) */}
               <Route path="approvals" element={<ProtectedRoute allowedRoles={['MANAGER']}><ApprovalsPage /></ProtectedRoute>} />

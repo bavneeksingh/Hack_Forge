@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ public class LeaveService {
     private final UserRepository userRepository;
     private final ApprovalHistoryRepository approvalHistoryRepository;
     private final TeamRepository teamRepository;
+    private final WorkationRepository workationRepository;
     private final LeaveStateMachine stateMachine;
     private final BalanceService balanceService;
     private final WorkingDayService workingDayService;
@@ -46,6 +48,7 @@ public class LeaveService {
                         UserRepository userRepository,
                         ApprovalHistoryRepository approvalHistoryRepository,
                         TeamRepository teamRepository,
+                        WorkationRepository workationRepository,
                         LeaveStateMachine stateMachine,
                         BalanceService balanceService,
                         WorkingDayService workingDayService,
@@ -57,6 +60,7 @@ public class LeaveService {
         this.userRepository = userRepository;
         this.approvalHistoryRepository = approvalHistoryRepository;
         this.teamRepository = teamRepository;
+        this.workationRepository = workationRepository;
         this.stateMachine = stateMachine;
         this.balanceService = balanceService;
         this.workingDayService = workingDayService;
@@ -258,11 +262,13 @@ public class LeaveService {
         List<LeaveStatus> statuses = List.of(
                 LeaveStatus.APPROVED, LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR);
         List<LeaveRequest> leaves;
+        List<Workation> workations;
         int teamSize;
         double threshold;
 
         if (user.getRole() == com.leavemanager.domain.enums.Role.HR) {
             leaves = leaveRequestRepository.findAllLeavesInRange(from, to, statuses);
+            workations = workationRepository.findAllApprovedWorkationsInRange(from, to);
             long activeCount = userRepository.findAll().stream().filter(User::isActive).count();
             teamSize = Math.max((int) activeCount, 1);
             threshold = 0.40;
@@ -280,6 +286,7 @@ public class LeaveService {
             }
 
             leaves = leaveRequestRepository.findTeamLeaves(managerId, from, to, statuses);
+            workations = workationRepository.findApprovedTeamWorkations(managerId, from, to);
             List<User> teammates = userRepository.findByManagerId(managerId);
             teamSize = Math.max(teammates.size(), 1);
             threshold = team != null && team.getConflictThreshold() != null
@@ -304,7 +311,53 @@ public class LeaveService {
                 .map(ph -> new TeamCalendarDto.PublicHolidayDto(ph.getDate(), ph.getName()))
                 .collect(Collectors.toList());
 
-        return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold);
+        DateTimeFormatter calDateFmt = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        List<TeamCalendarDto.WorkationCalendarEntry> workationEntries = workations.stream()
+                .map(w -> {
+                    String shortTz = w.getTimezone().contains("/")
+                            ? w.getTimezone().substring(w.getTimezone().lastIndexOf('/') + 1).replace('_', ' ')
+                            : w.getTimezone();
+                    LocalDate bStart = w.getBaseStartDate() != null ? w.getBaseStartDate() : w.getStartDate();
+                    LocalDate bEnd = w.getBaseEndDate() != null ? w.getBaseEndDate() : w.getEndDate();
+                    String bStartTime = w.getBaseStartTime() != null ? w.getBaseStartTime() : "08:30 PM IST";
+                    String bEndTime = w.getBaseEndTime() != null ? w.getBaseEndTime() : "08:30 PM IST";
+
+                    String localDatesDisplay = w.getStartDate().format(calDateFmt) + " → " + w.getEndDate().format(calDateFmt) + " (" + w.getCity() + " Time)";
+                    String teamDatesDisplay = bStart.format(calDateFmt) + " (" + bStartTime + ") → " + bEnd.format(calDateFmt) + " (" + bEndTime + ") (Base HQ IST)";
+                    String localTiming = "Full Day Leave (" + shortTz + ")";
+                    String timeGapDesc = w.getTimeGapDescription() != null ? w.getTimeGapDescription() : shortTz + " vs Base HQ (IST)";
+                    double timeDiff = w.getTimeGapHours() != null ? w.getTimeGapHours() : 0.0;
+
+                    return new TeamCalendarDto.WorkationCalendarEntry(
+                            w.getId(),
+                            w.getUser().getId(),
+                            w.getUser().getName(),
+                            w.getCity(),
+                            w.getCountry(),
+                            w.getTimezone(),
+                            w.getStatusIcon(),
+                            bStart,
+                            bEnd,
+                            w.getStartDate(),
+                            w.getEndDate(),
+                            bStartTime,
+                            bEndTime,
+                            timeGapDesc,
+                            timeDiff,
+                            localDatesDisplay,
+                            teamDatesDisplay,
+                            "00:00",
+                            "23:59",
+                            localTiming,
+                            bStartTime + " - " + bEndTime,
+                            0.0,
+                            w.getStatusMessage(),
+                            w.getApprovalStatus()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold, workationEntries);
     }
 
     // ─── HR Operations ────────────────────────────────────────────────
