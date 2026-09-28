@@ -86,9 +86,9 @@ export default function Layout() {
                 margin: '0.125rem 0.75rem',
                 borderRadius: '8px',
                 fontSize: '0.875rem',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--color-primary-light)' : 'var(--color-text-secondary)',
-                background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                background: isActive ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
               })}
