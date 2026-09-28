@@ -98,10 +98,18 @@ export interface ErrorResponse {
   fieldErrors?: Record<string, string>;
 }
 
+export interface PublicHolidayDto {
+  date: string;
+  name: string;
+}
+
 export interface TeamCalendarDto {
   from: string;
   to: string;
   entries: TeamCalendarEntry[];
+  holidays?: PublicHolidayDto[];
+  teamSize?: number;
+  conflictThreshold?: number;
 }
 
 export interface TeamCalendarEntry {

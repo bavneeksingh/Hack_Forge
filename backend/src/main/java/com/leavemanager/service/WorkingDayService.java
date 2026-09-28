@@ -57,6 +57,10 @@ public class WorkingDayService {
     /**
      * Get holidays falling in the given date range.
      */
+    public List<PublicHoliday> getPublicHolidaysInRange(LocalDate start, LocalDate end) {
+        return publicHolidayRepository.findByDateBetween(start, end);
+    }
+
     public List<LocalDate> getHolidaysInRange(LocalDate start, LocalDate end) {
         return publicHolidayRepository.findByDateBetween(start, end)
                 .stream()

@@ -29,7 +29,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findOverdueRequests(@Param("statuses") List<LeaveStatus> statuses,
                                            @Param("now") Instant now);
 
-    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.requester.manager.id = :managerId " +
+    @Query("SELECT lr FROM LeaveRequest lr WHERE (lr.requester.manager.id = :managerId OR lr.requester.id = :managerId) " +
            "AND lr.startDate <= :endDate AND lr.endDate >= :startDate " +
            "AND lr.status IN :statuses")
     List<LeaveRequest> findTeamLeaves(@Param("managerId") Long managerId,

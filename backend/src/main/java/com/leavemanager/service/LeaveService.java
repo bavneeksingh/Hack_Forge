@@ -256,6 +256,26 @@ public class LeaveService {
 
     @Transactional(readOnly = true)
     public TeamCalendarDto getTeamCalendar(Long managerId, LocalDate from, LocalDate to) {
+        return getTeamCalendarForUser(managerId, from, to);
+    }
+
+    @Transactional(readOnly = true)
+    public TeamCalendarDto getTeamCalendarForUser(Long userId, LocalDate from, LocalDate to) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        Long managerId;
+        Team team = user.getTeam();
+        if (user.getRole() == com.leavemanager.domain.enums.Role.MANAGER) {
+            managerId = user.getId();
+        } else if (user.getManager() != null) {
+            managerId = user.getManager().getId();
+        } else if (team != null && team.getManager() != null) {
+            managerId = team.getManager().getId();
+        } else {
+            managerId = user.getId();
+        }
+
         List<LeaveStatus> statuses = List.of(
                 LeaveStatus.APPROVED, LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR);
         List<LeaveRequest> leaves = leaveRequestRepository.findTeamLeaves(managerId, from, to, statuses);
@@ -272,7 +292,18 @@ public class LeaveService {
                 ))
                 .collect(Collectors.toList());
 
-        return new TeamCalendarDto(from, to, entries);
+        List<TeamCalendarDto.PublicHolidayDto> holidays = workingDayService.getPublicHolidaysInRange(from, to)
+                .stream()
+                .map(ph -> new TeamCalendarDto.PublicHolidayDto(ph.getDate(), ph.getName()))
+                .collect(Collectors.toList());
+
+        List<User> teammates = userRepository.findByManagerId(managerId);
+        int teamSize = Math.max(teammates.size(), 1);
+        double threshold = team != null && team.getConflictThreshold() != null
+                ? team.getConflictThreshold().doubleValue()
+                : 0.40;
+
+        return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold);
     }
 
     // ─── HR Operations ────────────────────────────────────────────────

@@ -23,6 +23,7 @@ public class StoryIntegrationTest {
         // Just verify login for Frank works as a baseline for the integration test
         String loginPayload = "{\"email\":\"frank@company.com\", \"password\":\"password123\"}";
         mockMvc.perform(post("/api/auth/login")
+                .contextPath("/api")
                 .contentType("application/json")
                 .content(loginPayload))
                 .andExpect(status().isOk());

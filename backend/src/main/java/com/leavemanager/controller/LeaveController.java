@@ -58,4 +58,12 @@ public class LeaveController {
             @RequestParam Long type) {
         return ResponseEntity.ok(leaveService.previewLeave(userDetails.getUserId(), start, end, type));
     }
+
+    @GetMapping("/team-calendar")
+    public ResponseEntity<TeamCalendarDto> getTeamCalendar(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to) {
+        return ResponseEntity.ok(leaveService.getTeamCalendarForUser(userDetails.getUserId(), from, to));
+    }
 }

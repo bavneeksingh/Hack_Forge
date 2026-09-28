@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import { useToast } from '../toast';
@@ -8,11 +8,12 @@ import type { LeavePreviewDto } from '../types';
 export default function ApplyLeavePage() {
   const toast = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
-  const [leaveTypeId, setLeaveTypeId] = useState<number>(1);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [leaveTypeId, setLeaveTypeId] = useState<number>(Number(searchParams.get('type')) || 1);
+  const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
+  const [endDate, setEndDate] = useState(searchParams.get('endDate') || searchParams.get('startDate') || '');
   const [reason, setReason] = useState('');
 
   // Preview query

@@ -10,6 +10,7 @@ const navItems = {
     { path: '/apply', label: 'Apply for Leave', icon: '✦' },
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
+    { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
   ],
   MANAGER: [
     { path: '/', label: 'Dashboard', icon: '◈' },
@@ -24,6 +25,7 @@ const navItems = {
     { path: '/apply', label: 'Apply for Leave', icon: '✦' },
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
+    { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
     { path: '/hr-queue', label: 'HR Queue', icon: '⚑' },
     { path: '/all-balances', label: 'All Balances', icon: '◎' },
     { path: '/policies', label: 'Policies', icon: '⚙' },

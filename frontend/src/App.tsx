@@ -52,9 +52,10 @@ export default function App() {
               <Route path="requests/:id" element={<LeaveDetailPage />} />
               <Route path="balance" element={<BalancePage />} />
               
+              <Route path="team-calendar" element={<TeamCalendarPage />} />
+              
               {/* Manager routes (accessible to MANAGER and HR) */}
               <Route path="approvals" element={<ProtectedRoute allowedRoles={['MANAGER']}><ApprovalsPage /></ProtectedRoute>} />
-              <Route path="team-calendar" element={<ProtectedRoute allowedRoles={['MANAGER']}><TeamCalendarPage /></ProtectedRoute>} />
               
               {/* HR routes (accessible to HR only) */}
               <Route path="hr-queue" element={<ProtectedRoute allowedRoles={['HR']}><HrQueuePage /></ProtectedRoute>} />
