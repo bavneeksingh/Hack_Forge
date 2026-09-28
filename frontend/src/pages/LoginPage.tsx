@@ -32,7 +32,6 @@ export default function LoginPage() {
 
   const demoUsers = [
     { email: 'charlie@company.com', label: 'Charlie (Employee)', role: 'EMPLOYEE' },
-    { email: 'maya.nomad@company.com', label: '🌴 Maya (Nomad in Tokyo)', role: 'EMPLOYEE' },
     { email: 'alice.manager@company.com', label: 'Alice (Manager)', role: 'MANAGER' },
     { email: 'hr.helen@company.com', label: 'Helen (HR)', role: 'HR' },
   ];

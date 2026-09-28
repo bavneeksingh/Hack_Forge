@@ -61,12 +61,6 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("BAD_REQUEST", "Malformed JSON request: " + ex.getMessage()));
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        return ResponseEntity.badRequest()
-                .body(new ErrorResponse("BAD_REQUEST", ex.getMessage()));
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
