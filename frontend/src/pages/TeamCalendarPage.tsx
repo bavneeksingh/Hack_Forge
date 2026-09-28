@@ -10,13 +10,19 @@ export default function TeamCalendarPage() {
   const [month, setMonth] = useState(today.getMonth());
   const [year, setYear] = useState(today.getFullYear());
 
-  const from = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const lastDay = new Date(year, month + 1, 0).getDate();
+  const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
+  const startDay = isCurrentMonth ? today.getDate() : 1;
+  const days = Array.from({ length: lastDay - startDay + 1 }, (_, i) => startDay + i);
+
+  const from = isCurrentMonth
+    ? `${year}-${String(month + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    : `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const to = `${year}-${String(month + 1).padStart(2, '0')}-${lastDay}`;
 
   // Default selected date to today if in current month/year, else the 1st
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const initialSelected = (month === today.getMonth() && year === today.getFullYear()) ? todayStr : `${from}`;
+  const initialSelected = isCurrentMonth ? todayStr : `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const [selectedDate, setSelectedDate] = useState<string>(initialSelected);
 
   const { data: calendar, isLoading } = useQuery({
@@ -42,9 +48,10 @@ export default function TeamCalendarPage() {
     byEmployee.set(e.employeeName, arr);
   });
 
-  const days = Array.from({ length: lastDay }, (_, i) => i + 1);
+  const canGoPrev = !isCurrentMonth && !(year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth()));
 
   const prevMonth = () => {
+    if (!canGoPrev) return;
     if (month === 0) {
       setMonth(11);
       setYear(year - 1);
@@ -129,7 +136,15 @@ export default function TeamCalendarPage() {
             Today
           </button>
           <div style={{ display: 'flex', alignItems: 'center', background: 'var(--color-surface-2)', borderRadius: '8px', padding: '0.25rem' }}>
-            <button className="btn btn-ghost btn-sm" onClick={prevMonth} style={{ padding: '0.25rem 0.5rem' }}>◂</button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={prevMonth}
+              disabled={!canGoPrev}
+              style={{ padding: '0.25rem 0.5rem', opacity: canGoPrev ? 1 : 0.35, cursor: canGoPrev ? 'pointer' : 'not-allowed' }}
+              title={canGoPrev ? 'Previous month' : 'Cannot view past months'}
+            >
+              ◂
+            </button>
             <span style={{ fontWeight: 700, minWidth: '150px', textAlign: 'center', fontSize: '0.95rem', color: 'var(--color-text)' }}>
               {monthNames[month]} {year}
             </span>
@@ -295,7 +310,7 @@ export default function TeamCalendarPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: `150px repeat(${lastDay}, minmax(32px, 1fr))`,
+              gridTemplateColumns: `150px repeat(${days.length}, minmax(36px, 1fr))`,
               gap: '2px',
               fontSize: '0.75rem',
             }}
