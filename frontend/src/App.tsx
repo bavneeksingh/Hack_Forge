@@ -15,6 +15,7 @@ import AllBalancesPage from './pages/AllBalancesPage';
 import PoliciesPage from './pages/PoliciesPage';
 import AuditLogPage from './pages/AuditLogPage';
 import LeaveDetailPage from './pages/LeaveDetailPage';
+import MidJoiningCalculatorPage from './pages/MidJoiningCalculatorPage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -58,6 +59,7 @@ export default function App() {
               {/* Manager routes (accessible to MANAGER and HR) */}
               <Route path="approvals" element={<ProtectedRoute allowedRoles={['MANAGER']}><ApprovalsPage /></ProtectedRoute>} />
               <Route path="workload" element={<ProtectedRoute allowedRoles={['MANAGER']}><WorkloadPage /></ProtectedRoute>} />
+              <Route path="calculator" element={<ProtectedRoute allowedRoles={['MANAGER']}><MidJoiningCalculatorPage /></ProtectedRoute>} />
               
               {/* HR routes (accessible to HR only) */}
               <Route path="hr-queue" element={<ProtectedRoute allowedRoles={['HR']}><HrQueuePage /></ProtectedRoute>} />

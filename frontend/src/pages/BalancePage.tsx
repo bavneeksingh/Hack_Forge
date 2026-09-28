@@ -1,8 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../auth';
 import type { BalanceDto } from '../types';
 
 export default function BalancePage() {
+  const { user } = useAuth();
+  const currentYear = new Date().getFullYear();
+  const joinYear = user?.joinDate ? new Date(user.joinDate).getFullYear() : null;
+  const isMidYearJoiner = joinYear === currentYear || (user?.joinDate && user.joinDate.startsWith('2026'));
+
   const { data: balances, isLoading } = useQuery({
     queryKey: ['my-balance'],
     queryFn: () => api.get<BalanceDto[]>('/balance/me').then((r) => r.data),
@@ -10,11 +17,53 @@ export default function BalancePage() {
 
   if (isLoading) return <div className="skeleton" style={{ height: '300px' }}></div>;
 
+  const isManagerOrHr = user?.role === 'MANAGER' || user?.role === 'HR';
+
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 className="page-title">My Balance</h1>
+        {isManagerOrHr && (
+          <Link to="/calculator" className="btn btn-primary" style={{ padding: '0.45rem 1.25rem', fontSize: '0.875rem', textDecoration: 'none' }}>
+            Adjust Member Balances
+          </Link>
+        )}
       </div>
+
+      {isManagerOrHr && isMidYearJoiner && (
+        <div
+          className="card animate-fade-in"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '1rem 1.5rem',
+            background: 'linear-gradient(135deg, rgba(130, 209, 157, 0.15) 0%, rgba(59, 107, 122, 0.1) 100%)',
+            border: '1px solid var(--color-primary)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div>
+              <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.95rem' }}>
+                Mid-Year Joiner Entitlement Adjustment Active
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                Your leave entitlements have been pro-rated based on your joining date ({user?.joinDate || 'Mid-Year'}).
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/calculator"
+            className="btn btn-ghost"
+            style={{ fontSize: '0.8125rem', fontWeight: 700, border: '1px solid var(--color-border)', borderRadius: '99px', textDecoration: 'none' }}
+          >
+            Adjust Balances &rarr;
+          </Link>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
         {balances?.map((b, idx) => (

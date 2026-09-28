@@ -75,6 +75,18 @@ const Icons = {
       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
     </svg>
   ),
+  Calculator: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="2" width="16" height="20" rx="2" />
+      <line x1="8" y1="6" x2="16" y2="6" />
+      <line x1="16" y1="14" x2="16" y2="14.01" />
+      <line x1="12" y1="14" x2="12" y2="14.01" />
+      <line x1="8" y1="14" x2="8" y2="14.01" />
+      <line x1="16" y1="18" x2="16" y2="18.01" />
+      <line x1="12" y1="18" x2="12" y2="18.01" />
+      <line x1="8" y1="18" x2="8" y2="18.01" />
+    </svg>
+  ),
 };
 
 const navItems = {
@@ -90,6 +102,7 @@ const navItems = {
     { path: '/apply', label: 'Apply for Leave', Icon: Icons.Apply },
     { path: '/requests', label: 'My Requests', Icon: Icons.Requests },
     { path: '/balance', label: 'My Balance', Icon: Icons.Balance },
+    { path: '/calculator', label: 'Adjust Member Balances', Icon: Icons.Calculator },
     { path: '/approvals', label: 'Approvals', Icon: Icons.Approvals },
     { path: '/workload', label: 'Workload Planner', Icon: Icons.Workload },
     { path: '/team-calendar', label: 'Team Calendar', Icon: Icons.Calendar },
@@ -102,6 +115,7 @@ const navItems = {
     { path: '/team-calendar', label: 'Team Calendar', Icon: Icons.Calendar },
     { path: '/hr-queue', label: 'HR Queue', Icon: Icons.Queue },
     { path: '/all-balances', label: 'All Balances', Icon: Icons.Balance },
+    { path: '/calculator', label: 'Adjust Member Balances', Icon: Icons.Calculator },
     { path: '/policies', label: 'Policies', Icon: Icons.Policies },
     { path: '/audit', label: 'Audit Log', Icon: Icons.Audit },
   ],
