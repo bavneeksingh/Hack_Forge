@@ -105,7 +105,7 @@ export default function ApplyLeavePage() {
             {preview.conflictFlagged && (
               <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#f87171', marginBottom: '0.375rem' }}>
-                  ⚠ Team Conflict Warning
+                  Team Conflict Warning
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   {preview.conflictDetails.map((d, i) => (
@@ -135,7 +135,7 @@ export default function ApplyLeavePage() {
           disabled={!startDate || !endDate || submitMutation.isPending}
           onClick={() => submitMutation.mutate()}
         >
-          {submitMutation.isPending ? 'Submitting...' : '✦ Submit Leave Request'}
+          {submitMutation.isPending ? 'Submitting...' : 'Submit Leave Request'}
         </button>
       </div>
     </div>

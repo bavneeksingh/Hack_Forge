@@ -20,8 +20,8 @@ export function StatusBadge({ status, escalated, conflictFlagged }: { status: st
       <span className={`badge ${badges[status] || 'badge-pending'}`}>
         {labels[status] || status}
       </span>
-      {escalated && <span className="badge badge-escalated">⚡ Escalated</span>}
-      {conflictFlagged && <span className="badge badge-conflict">⚠ Conflict</span>}
+      {escalated && <span className="badge badge-escalated">Escalated</span>}
+      {conflictFlagged && <span className="badge badge-conflict">Conflict</span>}
     </span>
   );
 }

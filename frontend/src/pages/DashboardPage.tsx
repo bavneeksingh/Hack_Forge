@@ -57,7 +57,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => navigate('/apply')}>
-          ✦ Apply for Leave
+          Apply for Leave
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export default function DashboardPage() {
               {teamApprovalCount}
             </div>
             <div className="stat-label">
-              ⚡ {isHr ? 'HR Queue Pending' : 'Awaiting Your Approval'}
+              {isHr ? 'HR Queue Pending' : 'Awaiting Your Approval'}
             </div>
           </div>
         )}
@@ -107,7 +107,6 @@ export default function DashboardPage() {
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ color: 'var(--color-warning)', fontSize: '1.25rem' }}>⚡</span>
               Action Required: Team Approvals ({managerPending.length})
             </h3>
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/approvals')}>
@@ -138,7 +137,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
-                  📅 {p.startDate} → {p.endDate}
+                  {p.startDate} → {p.endDate}
                 </div>
 
                 {p.reason && (
@@ -149,7 +148,7 @@ export default function DashboardPage() {
 
                 {p.conflictFlagged && (
                   <div style={{ padding: '0.375rem 0.5rem', background: 'rgba(239,68,68,0.1)', borderRadius: '6px', fontSize: '0.6875rem', color: '#f87171', marginBottom: '0.75rem' }}>
-                    ⚠ Conflict: Teammate overlap detected
+                    Conflict: Teammate overlap detected
                   </div>
                 )}
 
@@ -159,7 +158,7 @@ export default function DashboardPage() {
                     onClick={() => navigate('/approvals')}
                     style={{ flex: 1 }}
                   >
-                    ✓ Review in Approvals
+                    Review in Approvals
                   </button>
                   <button
                     className="btn btn-ghost btn-sm"
@@ -179,7 +178,6 @@ export default function DashboardPage() {
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ color: 'var(--color-primary)', fontSize: '1.25rem' }}>📊</span>
               Team Workload & Adaptive Thresholds
             </h3>
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/workload')}>
@@ -193,7 +191,6 @@ export default function DashboardPage() {
                 const isHigh = w.workloadLevel === 'HIGH' || w.workloadLevel === 'CRITICAL';
                 const color = w.workloadLevel === 'CRITICAL' ? '#ef4444' : w.workloadLevel === 'HIGH' ? '#f59e0b' : w.workloadLevel === 'LOW' ? '#10b981' : '#3b82f6';
                 const bg = w.workloadLevel === 'CRITICAL' ? 'rgba(239, 68, 68, 0.08)' : w.workloadLevel === 'HIGH' ? 'rgba(245, 158, 11, 0.08)' : w.workloadLevel === 'LOW' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)';
-                const icon = w.workloadLevel === 'CRITICAL' ? '🚨' : w.workloadLevel === 'HIGH' ? '🔥' : w.workloadLevel === 'LOW' ? '🌿' : '⚡';
 
                 return (
                   <div
@@ -212,7 +209,7 @@ export default function DashboardPage() {
                           {w.sprintName || 'Sprint Week'}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>
-                          📅 {w.startDate} → {w.endDate}
+                          {w.startDate} → {w.endDate}
                         </div>
                       </div>
                       <span
@@ -225,7 +222,7 @@ export default function DashboardPage() {
                           borderRadius: '999px',
                         }}
                       >
-                        {icon} {w.workloadLevel}
+                        {w.workloadLevel}
                       </span>
                     </div>
 
@@ -249,7 +246,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <button className="btn btn-primary btn-sm" onClick={() => navigate('/workload')}>
-                  ✦ Set Sprint Workload
+                  Set Sprint Workload
                 </button>
               </div>
             )}

@@ -60,7 +60,7 @@ export default function LoginPage() {
               marginBottom: '0.5rem',
             }}
           >
-            ✦ LeaveFlow
+            LeaveFlow
           </div>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
             Sign in to your leave management account

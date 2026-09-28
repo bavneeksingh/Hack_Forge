@@ -62,21 +62,21 @@ export default function ApprovalsPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button className="btn btn-success btn-sm" onClick={() => approveMutation.mutate(l.id)}
-                    disabled={approveMutation.isPending}>✓ Approve</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => setRejectId(l.id)}>✗ Reject</button>
+                    disabled={approveMutation.isPending}>Approve</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => setRejectId(l.id)}>Reject</button>
                 </div>
               </div>
               {l.reason && <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>"{l.reason}"</div>}
 
               {l.conflictFlagged && l.conflictDetails.length > 0 && (
                 <div style={{ marginTop: '0.75rem', padding: '0.625rem', background: 'rgba(239,68,68,0.08)', borderRadius: '8px', fontSize: '0.75rem', color: '#f87171' }}>
-                  ⚠ Conflict: {l.conflictDetails.map((d) => `${d.date} (${Math.round(d.pct * 100)}%)`).join(', ')}
+                  Conflict: {l.conflictDetails.map((d) => `${d.date} (${Math.round(d.pct * 100)}%)`).join(', ')}
                 </div>
               )}
 
               {l.escalated && (
                 <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--color-secondary)' }}>
-                  ⚡ Escalated from {l.escalatedFrom}
+                  Escalated from {l.escalatedFrom}
                 </div>
               )}
 
@@ -98,7 +98,7 @@ export default function ApprovalsPage() {
         </div>
       ) : (
         <div className="empty-state">
-          <p>🎉 No pending approvals — all caught up!</p>
+          <p>No pending approvals — all caught up.</p>
         </div>
       )}
     </div>

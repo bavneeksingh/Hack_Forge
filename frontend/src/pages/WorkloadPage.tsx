@@ -25,14 +25,13 @@ export default function WorkloadPage() {
     queryFn: () => api.get<WeeklyWorkloadDto[]>('/manager/workloads').then((r) => r.data),
   });
 
-  const levelConfigs: Record<string, { label: string; defaultThreshold: number; defaultScore: number; color: string; bg: string; icon: string; desc: string }> = {
+  const levelConfigs: Record<string, { label: string; defaultThreshold: number; defaultScore: number; color: string; bg: string; desc: string }> = {
     LOW: {
       label: 'Low Workload',
       defaultThreshold: 0.25,
       defaultScore: 25,
       color: '#10b981',
       bg: 'rgba(16, 185, 129, 0.1)',
-      icon: '🌿',
       desc: 'Relaxed period, maintenance or exploration. High availability for leaves.',
     },
     NORMAL: {
@@ -41,7 +40,6 @@ export default function WorkloadPage() {
       defaultScore: 50,
       color: '#3b82f6',
       bg: 'rgba(59, 130, 246, 0.1)',
-      icon: '⚡',
       desc: 'Standard sprint cadence. Default team base threshold applies.',
     },
     HIGH: {
@@ -50,7 +48,6 @@ export default function WorkloadPage() {
       defaultScore: 80,
       color: '#f59e0b',
       bg: 'rgba(245, 158, 11, 0.1)',
-      icon: '🔥',
       desc: 'Heavy deliverables or sprint release. Threshold automatically increases to 60%.',
     },
     CRITICAL: {
@@ -59,7 +56,6 @@ export default function WorkloadPage() {
       defaultScore: 95,
       color: '#ef4444',
       bg: 'rgba(239, 68, 68, 0.1)',
-      icon: '🚨',
       desc: 'Production launches or compliance audits. Threshold scales to 75% for strict coverage.',
     },
   };
@@ -153,14 +149,14 @@ export default function WorkloadPage() {
       <div className="page-header" style={{ marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span>⚡</span> Weekly Workload & Adaptive Thresholds
+            Weekly Workload & Adaptive Thresholds
           </h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             Configure weekly sprint demands. When workload is high, conflict thresholds automatically scale to safeguard team delivery.
           </p>
         </div>
         <button className="btn btn-primary" onClick={openNewModal} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span>✦</span> Schedule Week Workload
+          Schedule Week Workload
         </button>
       </div>
 
@@ -177,8 +173,8 @@ export default function WorkloadPage() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text)' }}>
-                <span>{cfg.icon}</span> {cfg.label}
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text)' }}>
+                {cfg.label}
               </div>
               <span
                 style={{
@@ -233,24 +229,6 @@ export default function WorkloadPage() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '12px',
-                        background: cfg.bg,
-                        color: cfg.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {cfg.icon}
-                    </div>
-
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.2rem' }}>
                         <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-text)' }}>
@@ -274,7 +252,7 @@ export default function WorkloadPage() {
                       </div>
 
                       <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <span>📅 {w.startDate} → {w.endDate}</span>
+                        <span>{w.startDate} → {w.endDate}</span>
                         <span>|</span>
                         <span>Intensity: <strong>{w.workloadScore}%</strong></span>
                         <span>|</span>
@@ -311,13 +289,12 @@ export default function WorkloadPage() {
           </div>
         ) : (
           <div className="empty-state" style={{ padding: '2.5rem 1rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
             <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>No weekly workloads scheduled yet</p>
             <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', maxWidth: '400px', margin: '0 auto 1rem' }}>
               Add a workload schedule for upcoming sprint releases so the conflict threshold automatically adapts.
             </p>
             <button className="btn btn-primary btn-sm" onClick={openNewModal}>
-              ✦ Schedule First Week
+              Schedule First Week
             </button>
           </div>
         )}
@@ -423,7 +400,7 @@ export default function WorkloadPage() {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                           <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-                            {cfg.icon} {cfg.label}
+                            {cfg.label}
                           </span>
                           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: cfg.color }}>
                             {Math.round(cfg.defaultThreshold * 100)}%

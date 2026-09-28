@@ -126,7 +126,7 @@ export default function LeaveDetailPage() {
           <div style={{ marginBottom: '0.75rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Date Range</div>
             <div style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--color-text)' }}>
-              📅 {leave.startDate} → {leave.endDate}
+              {leave.startDate} → {leave.endDate}
             </div>
           </div>
 
@@ -147,7 +147,7 @@ export default function LeaveDetailPage() {
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Current Assignee</div>
             <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text)', marginTop: '0.25rem' }}>
-              {leave.currentAssignee ? `👤 ${leave.currentAssignee.name}` : '— Completed / Resolved —'}
+              {leave.currentAssignee ? leave.currentAssignee.name : '— Completed / Resolved —'}
             </div>
           </div>
 
@@ -155,7 +155,7 @@ export default function LeaveDetailPage() {
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Approval Deadline</div>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-warning)', fontWeight: 500, marginTop: '0.25rem' }}>
-                ⏰ {new Date(leave.dueAt).toLocaleString()}
+                {new Date(leave.dueAt).toLocaleString()}
               </div>
             </div>
           )}
@@ -163,7 +163,7 @@ export default function LeaveDetailPage() {
           {leave.escalated && (
             <div style={{ padding: '0.75rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.3)', marginBottom: '0.5rem' }}>
               <div style={{ fontWeight: 600, color: 'var(--color-secondary)', fontSize: '0.8125rem' }}>
-                ⚡ Escalated Request
+                Escalated Request
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
                 Escalated from approver: {leave.escalatedFrom || 'Original Manager'}
@@ -174,7 +174,7 @@ export default function LeaveDetailPage() {
           {leave.conflictFlagged && (
             <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
               <div style={{ fontWeight: 600, color: 'var(--color-danger)', fontSize: '0.8125rem' }}>
-                ⚠ Team Conflict Flagged
+                Team Conflict Flagged
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
                 {leave.conflictDetails && leave.conflictDetails.length > 0 ? (

@@ -109,7 +109,7 @@ export default function TeamCalendarPage() {
 
   const activeDay = getDayInfo(selectedDate || from);
 
-  const roleLabel = role === 'HR' ? '🏢 HR' : role === 'MANAGER' ? '👔 Manager' : '👤 Employee';
+  const roleLabel = role === 'HR' ? 'HR' : role === 'MANAGER' ? 'Manager' : 'Employee';
 
   /* ── Render ──────────────────────────────────────────────── */
   return (
@@ -122,7 +122,7 @@ export default function TeamCalendarPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
-            📅 Team Calendar
+            Team Calendar
           </h1>
           <span style={{
             fontSize: '0.65rem', fontWeight: 700,
@@ -165,7 +165,7 @@ export default function TeamCalendarPage() {
           </div>
           <button className="btn btn-primary btn-sm" onClick={() => navigate(`/apply?startDate=${selectedDate}&endDate=${selectedDate}`)}
             style={{ borderRadius: '12px', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-            ✦ Apply Leave
+            Apply Leave
           </button>
         </div>
       </div>
@@ -206,18 +206,17 @@ export default function TeamCalendarPage() {
                   color: activeDay.dayWorkload.workloadLevel === 'CRITICAL' ? '#dc2626' : activeDay.dayWorkload.workloadLevel === 'HIGH' ? '#d97706' : activeDay.dayWorkload.workloadLevel === 'LOW' ? '#059669' : '#2563eb',
                   fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '99px',
                 }}>
-                  {activeDay.dayWorkload.workloadLevel === 'CRITICAL' ? '🚨' : activeDay.dayWorkload.workloadLevel === 'HIGH' ? '🔥' : activeDay.dayWorkload.workloadLevel === 'LOW' ? '🌿' : '⚡'}
                   {activeDay.dayWorkload.workloadLevel} ({Math.round(activeDay.threshold * 100)}% Threshold)
                   {activeDay.dayWorkload.sprintName ? ` • ${activeDay.dayWorkload.sprintName}` : ''}
                 </span>
               )}
             </div>
             <div style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)' }}>
-              {activeDay.holiday ? <>🏖️ <b>{activeDay.holiday.name}</b> — Holiday</>
-                : activeDay.isWeekend ? <>☕ Weekend</>
-                : activeDay.isConflict ? <>⚠️ <b style={{ color: '#dc2626' }}>Conflict</b> — {activeDay.awayCount} away ({activeDay.awayPct}% vs {Math.round(activeDay.threshold * 100)}% threshold)</>
-                : activeDay.isModerate ? <>⚡ <b style={{ color: '#d97706' }}>Moderate</b> — {activeDay.awayCount} away (Under {Math.round(activeDay.threshold * 100)}% threshold)</>
-                : <>✓ <b style={{ color: '#16a34a' }}>Clear</b> — Full team available ({Math.round(activeDay.threshold * 100)}% Capacity)</>
+              {activeDay.holiday ? <><b>{activeDay.holiday.name}</b> — Holiday</>
+                : activeDay.isWeekend ? <>Weekend</>
+                : activeDay.isConflict ? <><b style={{ color: '#dc2626' }}>Conflict</b> — {activeDay.awayCount} away ({activeDay.awayPct}% vs {Math.round(activeDay.threshold * 100)}% threshold)</>
+                : activeDay.isModerate ? <><b style={{ color: '#d97706' }}>Moderate</b> — {activeDay.awayCount} away (Under {Math.round(activeDay.threshold * 100)}% threshold)</>
+                : <><b style={{ color: '#16a34a' }}>Clear</b> — Full team available ({Math.round(activeDay.threshold * 100)}% Capacity)</>
               }
             </div>
           </div>
@@ -247,7 +246,7 @@ export default function TeamCalendarPage() {
             fontSize: '0.775rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
             whiteSpace: 'nowrap',
           }}>
-            ✦ Apply for this day
+            Apply for this day
           </button>
         )}
       </div>
@@ -324,11 +323,11 @@ export default function TeamCalendarPage() {
               const info = getDayInfo(ds);
               const isSelected = selectedDate === ds;
               let bg: string, clr: string, icon: string;
-              if (info.holiday) { bg = 'rgba(139,92,246,0.18)'; clr = '#8b5cf6'; icon = '🏖️'; }
+              if (info.holiday) { bg = 'rgba(139,92,246,0.18)'; clr = '#8b5cf6'; icon = 'H'; }
               else if (info.isWeekend) { bg = 'rgba(148,163,184,0.08)'; clr = '#b0b8c4'; icon = '·'; }
-              else if (info.isConflict) { bg = 'rgba(239,68,68,0.18)'; clr = '#ef4444'; icon = '⚠'; }
-              else if (info.isModerate) { bg = 'rgba(245,158,11,0.18)'; clr = '#f59e0b'; icon = '!'; }
-              else { bg = 'rgba(34,197,94,0.15)'; clr = '#22c55e'; icon = '✓'; }
+              else if (info.isConflict) { bg = 'rgba(239,68,68,0.18)'; clr = '#ef4444'; icon = '!'; }
+              else if (info.isModerate) { bg = 'rgba(245,158,11,0.18)'; clr = '#f59e0b'; icon = '·'; }
+              else { bg = 'rgba(34,197,94,0.15)'; clr = '#22c55e'; icon = '•'; }
               return (
                 <div key={`s-${d}`} onClick={() => setSelectedDate(ds)} style={{
                   height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -413,7 +412,6 @@ export default function TeamCalendarPage() {
             {/* Empty */}
             {byEmployee.size === 0 && !isLoading && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--color-text-muted)' }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎯</div>
                 <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>No team leave data for this period</div>
               </div>
             )}
@@ -429,7 +427,7 @@ export default function TeamCalendarPage() {
           boxShadow: '0 2px 12px rgba(0,0,0,0.025)', border: '1px solid rgba(226,232,240,0.5)',
         }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            🏖️ Holidays in {MONTH_NAMES[month]}
+            Holidays in {MONTH_NAMES[month]}
           </h3>
           {calendar?.holidays && calendar.holidays.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -459,7 +457,7 @@ export default function TeamCalendarPage() {
             boxShadow: '0 2px 12px rgba(0,0,0,0.025)', border: '1px solid rgba(226,232,240,0.5)',
           }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              📊 {role === 'HR' ? 'Org' : 'Team'} Snapshot
+              {role === 'HR' ? 'Org' : 'Team'} Snapshot
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
               {[
@@ -483,17 +481,17 @@ export default function TeamCalendarPage() {
           border: '1px solid rgba(130,209,157,0.2)',
         }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            💡 Quick Tips
+            Quick Tips
           </h3>
           <div style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.3rem' }}>
-              <span>✓</span> <span>Click any <b>green</b> day for conflict-free leave</span>
+              <span>•</span> <span>Click any <b>green</b> day for conflict-free leave</span>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.3rem' }}>
-              <span>⚠</span> <span>Red = high overlap, may need justification</span>
+              <span>•</span> <span>Red indicates high overlap against dynamic threshold</span>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <span>📊</span> <span>Click a leave bar to see the full request</span>
+              <span>•</span> <span>Click a leave bar to see the full request details</span>
             </div>
           </div>
         </div>

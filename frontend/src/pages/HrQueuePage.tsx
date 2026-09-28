@@ -70,8 +70,8 @@ export default function HrQueuePage() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-success btn-sm" onClick={() => approveMutation.mutate(l.id)}>✓ Approve</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => setRejectId(l.id)}>✗ Reject</button>
+                  <button className="btn btn-success btn-sm" onClick={() => approveMutation.mutate(l.id)}>Approve</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => setRejectId(l.id)}>Reject</button>
                 </div>
               </div>
 

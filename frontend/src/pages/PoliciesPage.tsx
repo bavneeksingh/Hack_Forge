@@ -49,7 +49,7 @@ export default function PoliciesPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h3 style={{ color: 'var(--color-text)' }}>{p.teamName}</h3>
                 {editing !== p.teamId && (
-                  <button className="btn btn-ghost btn-sm" onClick={() => startEdit(p)}>⚙ Edit</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => startEdit(p)}>Edit</button>
                 )}
               </div>
 
