@@ -3,6 +3,7 @@ package com.leavemanager.controller;
 import com.leavemanager.dto.*;
 import com.leavemanager.security.CustomUserDetails;
 import com.leavemanager.service.LeaveService;
+import com.leavemanager.service.WorkloadService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.List;
 public class ManagerController {
 
     private final LeaveService leaveService;
+    private final WorkloadService workloadService;
 
-    public ManagerController(LeaveService leaveService) {
+    public ManagerController(LeaveService leaveService, WorkloadService workloadService) {
         this.leaveService = leaveService;
+        this.workloadService = workloadService;
     }
 
     @GetMapping("/pending")
@@ -49,5 +52,26 @@ public class ManagerController {
             @RequestParam LocalDate from,
             @RequestParam LocalDate to) {
         return ResponseEntity.ok(leaveService.getTeamCalendar(userDetails.getUserId(), from, to));
+    }
+
+    @GetMapping("/workloads")
+    public ResponseEntity<List<WeeklyWorkloadDto>> getWorkloads(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(workloadService.getWorkloadsForManager(userDetails.getUserId()));
+    }
+
+    @PostMapping("/workloads")
+    public ResponseEntity<WeeklyWorkloadDto> saveWorkload(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody SaveWorkloadRequest request) {
+        return ResponseEntity.ok(workloadService.saveWorkload(userDetails.getUserId(), request));
+    }
+
+    @DeleteMapping("/workloads/{id}")
+    public ResponseEntity<Void> deleteWorkload(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        workloadService.deleteWorkload(userDetails.getUserId(), id);
+        return ResponseEntity.noContent().build();
     }
 }

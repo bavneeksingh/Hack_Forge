@@ -38,6 +38,7 @@ public class LeaveService {
     private final BalanceService balanceService;
     private final WorkingDayService workingDayService;
     private final ConflictService conflictService;
+    private final WorkloadService workloadService;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -50,6 +51,7 @@ public class LeaveService {
                         BalanceService balanceService,
                         WorkingDayService workingDayService,
                         ConflictService conflictService,
+                        WorkloadService workloadService,
                         ObjectMapper objectMapper,
                         Clock clock) {
         this.leaveRequestRepository = leaveRequestRepository;
@@ -61,6 +63,7 @@ public class LeaveService {
         this.balanceService = balanceService;
         this.workingDayService = workingDayService;
         this.conflictService = conflictService;
+        this.workloadService = workloadService;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -260,12 +263,14 @@ public class LeaveService {
         List<LeaveRequest> leaves;
         int teamSize;
         double threshold;
+        List<com.leavemanager.dto.WeeklyWorkloadDto> workloads;
 
         if (user.getRole() == com.leavemanager.domain.enums.Role.HR) {
             leaves = leaveRequestRepository.findAllLeavesInRange(from, to, statuses);
             long activeCount = userRepository.findAll().stream().filter(User::isActive).count();
             teamSize = Math.max((int) activeCount, 1);
             threshold = 0.40;
+            workloads = workloadService != null ? workloadService.getAllWorkloadsInRange(from, to) : List.of();
         } else {
             Long managerId;
             Team team = user.getTeam();
@@ -285,6 +290,9 @@ public class LeaveService {
             threshold = team != null && team.getConflictThreshold() != null
                     ? team.getConflictThreshold().doubleValue()
                     : 0.40;
+            workloads = (team != null && workloadService != null)
+                    ? workloadService.getWorkloadsForTeam(team.getId(), from, to)
+                    : List.of();
         }
 
         List<TeamCalendarDto.TeamCalendarEntry> entries = leaves.stream()
@@ -304,7 +312,7 @@ public class LeaveService {
                 .map(ph -> new TeamCalendarDto.PublicHolidayDto(ph.getDate(), ph.getName()))
                 .collect(Collectors.toList());
 
-        return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold);
+        return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold, workloads);
     }
 
     // ─── HR Operations ────────────────────────────────────────────────

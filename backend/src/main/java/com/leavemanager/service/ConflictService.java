@@ -9,6 +9,7 @@ import com.leavemanager.domain.enums.LeaveStatus;
 import com.leavemanager.dto.ConflictDetail;
 import com.leavemanager.repository.LeaveRequestRepository;
 import com.leavemanager.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * Detects team conflicts: for each requested working day, calculates the percentage
  * of team members who are away (APPROVED or PENDING leave) and flags if any day
- * exceeds the team's conflict threshold.
+ * exceeds the team's dynamic conflict threshold (taking weekly workload into account).
  *
  * Conflict flags are INFORMATION ONLY — they never block submit or approval.
  */
@@ -29,32 +30,41 @@ public class ConflictService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final UserRepository userRepository;
     private final WorkingDayService workingDayService;
+    private final WorkloadService workloadService;
     private final ObjectMapper objectMapper;
 
     public ConflictService(LeaveRequestRepository leaveRequestRepository,
                            UserRepository userRepository,
                            WorkingDayService workingDayService,
                            ObjectMapper objectMapper) {
+        this(leaveRequestRepository, userRepository, workingDayService, null, objectMapper);
+    }
+
+    @Autowired
+    public ConflictService(LeaveRequestRepository leaveRequestRepository,
+                           UserRepository userRepository,
+                           WorkingDayService workingDayService,
+                           WorkloadService workloadService,
+                           ObjectMapper objectMapper) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.userRepository = userRepository;
         this.workingDayService = workingDayService;
+        this.workloadService = workloadService;
         this.objectMapper = objectMapper;
     }
 
     /**
      * Check conflict for a leave request. Updates the request's conflictFlagged
-     * and conflictDetails fields.
+     * and conflictDetails fields using the day's dynamic workload threshold.
      */
     public void checkAndSetConflict(LeaveRequest request, User requester) {
         User manager = requester.getManager();
         if (manager == null) {
-            // No manager means no team conflict to check
             request.setConflictFlagged(false);
             request.setConflictDetails(null);
             return;
         }
 
-        // Team = all employees sharing the same manager
         List<User> teammates = userRepository.findByManagerId(manager.getId());
         int teamSize = teammates.size();
 
@@ -64,11 +74,9 @@ public class ConflictService {
             return;
         }
 
-        // Get working days in the request range
         List<LocalDate> workingDays = workingDayService.getWorkingDaysInRange(
                 request.getStartDate(), request.getEndDate());
 
-        // Find overlapping leaves from teammates (excluding the requester)
         List<LeaveStatus> relevantStatuses = List.of(
                 LeaveStatus.APPROVED, LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR);
         List<LeaveRequest> teammateLeaves = leaveRequestRepository.findTeamLeavesExcluding(
@@ -79,9 +87,7 @@ public class ConflictService {
                 requester.getId()
         );
 
-        // Get conflict threshold from team
         Team team = requester.getTeam();
-        BigDecimal threshold = team != null ? team.getConflictThreshold() : new BigDecimal("0.40");
 
         List<ConflictDetail> conflicts = new ArrayList<>();
         boolean flagged = false;
@@ -95,10 +101,13 @@ public class ConflictService {
                 }
             }
 
-            // +1 for the requester themselves
             double awayPct = (double) (awayNames.size() + 1) / teamSize;
 
-            if (awayPct >= threshold.doubleValue()) {
+            BigDecimal dayThreshold = workloadService != null
+                    ? workloadService.getEffectiveThresholdForDate(team, day)
+                    : (team != null && team.getConflictThreshold() != null ? team.getConflictThreshold() : new BigDecimal("0.40"));
+
+            if (awayPct >= dayThreshold.doubleValue()) {
                 flagged = true;
                 conflicts.add(new ConflictDetail(day, awayNames, Math.round(awayPct * 100.0) / 100.0));
             }
@@ -140,7 +149,6 @@ public class ConflictService {
                 manager.getId(), startDate, endDate, relevantStatuses, requester.getId());
 
         Team team = requester.getTeam();
-        BigDecimal threshold = team != null ? team.getConflictThreshold() : new BigDecimal("0.40");
 
         List<ConflictDetail> conflicts = new ArrayList<>();
         boolean flagged = false;
@@ -153,7 +161,12 @@ public class ConflictService {
                 }
             }
             double awayPct = (double) (awayNames.size() + 1) / teamSize;
-            if (awayPct >= threshold.doubleValue()) {
+
+            BigDecimal dayThreshold = workloadService != null
+                    ? workloadService.getEffectiveThresholdForDate(team, day)
+                    : (team != null && team.getConflictThreshold() != null ? team.getConflictThreshold() : new BigDecimal("0.40"));
+
+            if (awayPct >= dayThreshold.doubleValue()) {
                 flagged = true;
                 conflicts.add(new ConflictDetail(day, awayNames, Math.round(awayPct * 100.0) / 100.0));
             }

@@ -8,6 +8,7 @@ import ApplyLeavePage from './pages/ApplyLeavePage';
 import MyRequestsPage from './pages/MyRequestsPage';
 import BalancePage from './pages/BalancePage';
 import ApprovalsPage from './pages/ApprovalsPage';
+import WorkloadPage from './pages/WorkloadPage';
 import TeamCalendarPage from './pages/TeamCalendarPage';
 import HrQueuePage from './pages/HrQueuePage';
 import AllBalancesPage from './pages/AllBalancesPage';
@@ -56,6 +57,7 @@ export default function App() {
               
               {/* Manager routes (accessible to MANAGER and HR) */}
               <Route path="approvals" element={<ProtectedRoute allowedRoles={['MANAGER']}><ApprovalsPage /></ProtectedRoute>} />
+              <Route path="workload" element={<ProtectedRoute allowedRoles={['MANAGER']}><WorkloadPage /></ProtectedRoute>} />
               
               {/* HR routes (accessible to HR only) */}
               <Route path="hr-queue" element={<ProtectedRoute allowedRoles={['HR']}><HrQueuePage /></ProtectedRoute>} />

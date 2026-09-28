@@ -18,6 +18,7 @@ const navItems = {
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
     { path: '/approvals', label: 'Approvals', icon: '✓' },
+    { path: '/workload', label: 'Workload Planner', icon: '⚡' },
     { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
   ],
   HR: [
@@ -25,6 +26,7 @@ const navItems = {
     { path: '/apply', label: 'Apply for Leave', icon: '✦' },
     { path: '/requests', label: 'My Requests', icon: '☰' },
     { path: '/balance', label: 'My Balance', icon: '◎' },
+    { path: '/workload', label: 'Workload Planner', icon: '⚡' },
     { path: '/team-calendar', label: 'Team Calendar', icon: '▦' },
     { path: '/hr-queue', label: 'HR Queue', icon: '⚑' },
     { path: '/all-balances', label: 'All Balances', icon: '◎' },
@@ -36,7 +38,8 @@ const navItems = {
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const items = navItems[user?.role || 'EMPLOYEE'];
+  const roleKey = (user?.role as keyof typeof navItems) || 'EMPLOYEE';
+  const items = navItems[roleKey] || navItems.EMPLOYEE;
 
   const isManager = user?.role === 'MANAGER' || user?.role === 'HR';
   const isHr = user?.role === 'HR';

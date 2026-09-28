@@ -9,10 +9,16 @@ public record TeamCalendarDto(
     List<TeamCalendarEntry> entries,
     List<PublicHolidayDto> holidays,
     int teamSize,
-    double conflictThreshold
+    double conflictThreshold,
+    List<WeeklyWorkloadDto> workloads
 ) {
     public TeamCalendarDto(LocalDate from, LocalDate to, List<TeamCalendarEntry> entries) {
-        this(from, to, entries, List.of(), 0, 0.40);
+        this(from, to, entries, List.of(), 0, 0.40, List.of());
+    }
+
+    public TeamCalendarDto(LocalDate from, LocalDate to, List<TeamCalendarEntry> entries,
+                           List<PublicHolidayDto> holidays, int teamSize, double conflictThreshold) {
+        this(from, to, entries, holidays, teamSize, conflictThreshold, List.of());
     }
 
     public record TeamCalendarEntry(

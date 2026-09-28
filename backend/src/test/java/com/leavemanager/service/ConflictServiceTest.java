@@ -153,6 +153,38 @@ class ConflictServiceTest {
         assertThat(result.details().get(0).pct()).isEqualTo(1.0);
     }
 
+    @Test
+    void conflict_evaluatesAgainstDynamicWorkloadThreshold() {
+        WorkloadService mockWorkloadService = org.mockito.Mockito.mock(WorkloadService.class);
+        ConflictService dynamicConflictService = new ConflictService(
+                leaveRequestRepository, userRepository, workingDayService, mockWorkloadService, objectMapper);
+
+        when(userRepository.findByManagerId(1L)).thenReturn(List.of(employee1, employee2, employee3)); // 3 members
+        when(workingDayService.getWorkingDaysInRange(any(), any()))
+                .thenReturn(List.of(LocalDate.of(2026, 10, 14)));
+
+        // 1 teammate away -> (1+1)/3 = 67%
+        LeaveRequest existingLeave = createRequest(employee2, LocalDate.of(2026, 10, 14), LocalDate.of(2026, 10, 14));
+        existingLeave.setStatus(LeaveStatus.APPROVED);
+        when(leaveRequestRepository.findTeamLeavesExcluding(any(), any(), any(), any(), eq(2L)))
+                .thenReturn(List.of(existingLeave));
+
+        // When week has CRITICAL workload with threshold 75% -> 67% < 75% -> NOT flagged
+        when(mockWorkloadService.getEffectiveThresholdForDate(eq(team), eq(LocalDate.of(2026, 10, 14))))
+                .thenReturn(new BigDecimal("0.75"));
+
+        LeaveRequest request = createRequest(employee1, LocalDate.of(2026, 10, 14), LocalDate.of(2026, 10, 14));
+        dynamicConflictService.checkAndSetConflict(request, employee1);
+        assertThat(request.isConflictFlagged()).isFalse();
+
+        // When week has HIGH workload with threshold 60% -> 67% >= 60% -> FLAGGED
+        when(mockWorkloadService.getEffectiveThresholdForDate(eq(team), eq(LocalDate.of(2026, 10, 14))))
+                .thenReturn(new BigDecimal("0.60"));
+
+        dynamicConflictService.checkAndSetConflict(request, employee1);
+        assertThat(request.isConflictFlagged()).isTrue();
+    }
+
     private LeaveRequest createRequest(User requester, LocalDate start, LocalDate end) {
         LeaveRequest request = new LeaveRequest();
         request.setId(100L);

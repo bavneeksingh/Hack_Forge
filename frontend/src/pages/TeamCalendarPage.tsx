@@ -86,7 +86,8 @@ export default function TeamCalendarPage() {
     const awayEntries = calendar?.entries.filter((e) => ds >= e.startDate && ds <= e.endDate) || [];
     const awayCount = awayEntries.length;
     const teamSize = calendar?.teamSize || 1;
-    const threshold = calendar?.conflictThreshold || 0.4;
+    const dayWorkload = calendar?.workloads?.find((w) => ds >= w.startDate && ds <= w.endDate);
+    const threshold = dayWorkload?.threshold || calendar?.conflictThreshold || 0.4;
     let isConflict = false, isModerate = false, awayPct = 0;
     if (!isWeekend && !holiday && awayCount > 0) {
       if (teamSize > 1) {
@@ -101,6 +102,8 @@ export default function TeamCalendarPage() {
       isWeekend, holiday, awayEntries, awayCount, isConflict, isModerate,
       isAvailable: !isWeekend && !holiday && awayCount === 0,
       awayPct: Math.round(awayPct * 100),
+      dayWorkload,
+      threshold,
     };
   };
 
@@ -195,13 +198,26 @@ export default function TeamCalendarPage() {
             <span style={{ fontSize: '1.1rem', fontWeight: 800, lineHeight: 1.1 }}>{activeDay.dayNumber}</span>
           </div>
           <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)' }}>{activeDay.fullDateName}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)' }}>{activeDay.fullDateName}</div>
+              {activeDay.dayWorkload && (
+                <span style={{
+                  background: activeDay.dayWorkload.workloadLevel === 'CRITICAL' ? 'rgba(239, 68, 68, 0.15)' : activeDay.dayWorkload.workloadLevel === 'HIGH' ? 'rgba(245, 158, 11, 0.15)' : activeDay.dayWorkload.workloadLevel === 'LOW' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                  color: activeDay.dayWorkload.workloadLevel === 'CRITICAL' ? '#dc2626' : activeDay.dayWorkload.workloadLevel === 'HIGH' ? '#d97706' : activeDay.dayWorkload.workloadLevel === 'LOW' ? '#059669' : '#2563eb',
+                  fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '99px',
+                }}>
+                  {activeDay.dayWorkload.workloadLevel === 'CRITICAL' ? '🚨' : activeDay.dayWorkload.workloadLevel === 'HIGH' ? '🔥' : activeDay.dayWorkload.workloadLevel === 'LOW' ? '🌿' : '⚡'}
+                  {activeDay.dayWorkload.workloadLevel} ({Math.round(activeDay.threshold * 100)}% Threshold)
+                  {activeDay.dayWorkload.sprintName ? ` • ${activeDay.dayWorkload.sprintName}` : ''}
+                </span>
+              )}
+            </div>
             <div style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)' }}>
               {activeDay.holiday ? <>🏖️ <b>{activeDay.holiday.name}</b> — Holiday</>
                 : activeDay.isWeekend ? <>☕ Weekend</>
-                  : activeDay.isConflict ? <>⚠️ <b style={{ color: '#dc2626' }}>Conflict</b> — {activeDay.awayCount} away ({activeDay.awayPct}%)</>
-                    : activeDay.isModerate ? <>⚡ <b style={{ color: '#d97706' }}>Moderate</b> — {activeDay.awayCount} away</>
-                      : <>✓ <b style={{ color: '#16a34a' }}>Clear</b> — Full team available</>
+                : activeDay.isConflict ? <>⚠️ <b style={{ color: '#dc2626' }}>Conflict</b> — {activeDay.awayCount} away ({activeDay.awayPct}% vs {Math.round(activeDay.threshold * 100)}% threshold)</>
+                : activeDay.isModerate ? <>⚡ <b style={{ color: '#d97706' }}>Moderate</b> — {activeDay.awayCount} away (Under {Math.round(activeDay.threshold * 100)}% threshold)</>
+                : <>✓ <b style={{ color: '#16a34a' }}>Clear</b> — Full team available ({Math.round(activeDay.threshold * 100)}% Capacity)</>
               }
             </div>
           </div>

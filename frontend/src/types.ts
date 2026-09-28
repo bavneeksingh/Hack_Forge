@@ -1,22 +1,20 @@
 export interface UserDto {
-  id: number;
+  id?: number;
+  userId?: number;
   email: string;
   name: string;
   role: 'EMPLOYEE' | 'MANAGER' | 'HR';
-  managerId: number | null;
-  managerName: string | null;
-  teamId: number | null;
-  teamName: string | null;
+  teamId?: number;
+  teamName?: string;
+  managerId?: number;
+  managerName?: string;
 }
 
-export interface UserSummaryDto {
-  id: number;
-  name: string;
-}
+export type User = UserDto;
 
 export interface LoginRequest {
   email: string;
-  password: string;
+  password?: string;
 }
 
 export interface LoginResponse {
@@ -24,25 +22,29 @@ export interface LoginResponse {
   user: UserDto;
 }
 
-export interface LeaveSubmitRequest {
-  leaveTypeId: number;
-  startDate: string;
-  endDate: string;
-  reason?: string;
+export interface UserSummaryDto {
+  id: number;
+  name: string;
 }
 
 export interface ConflictDetail {
   date: string;
   awayNames: string[];
+  awayMembers?: string[];
   pct: number;
+  awayPercentage?: number;
+  threshold?: number;
+  workloadLevel?: string;
+  sprintName?: string;
 }
 
 export interface ApprovalHistoryDto {
   stage: string;
   actor: UserSummaryDto;
   action: string;
-  comment: string | null;
+  comment?: string;
   at: string;
+  createdAt?: string;
 }
 
 export interface LeaveRequestDto {
@@ -52,16 +54,25 @@ export interface LeaveRequestDto {
   startDate: string;
   endDate: string;
   workingDays: number;
-  reason: string | null;
-  status: string;
-  currentAssignee: UserSummaryDto | null;
-  dueAt: string | null;
+  reason?: string;
+  status: 'PENDING_MANAGER' | 'PENDING_HR' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  currentAssignee?: UserSummaryDto;
+  dueAt?: string;
   escalated: boolean;
-  escalatedFrom: string | null;
+  escalatedFrom?: string;
   stageSkipped: boolean;
   conflictFlagged: boolean;
   conflictDetails: ConflictDetail[];
   history: ApprovalHistoryDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeaveSubmitRequest {
+  leaveTypeId: number;
+  startDate: string;
+  endDate: string;
+  reason?: string;
 }
 
 export interface LeavePreviewDto {
@@ -103,6 +114,31 @@ export interface PublicHolidayDto {
   name: string;
 }
 
+export interface WeeklyWorkloadDto {
+  id: number;
+  teamId: number;
+  teamName: string;
+  startDate: string;
+  endDate: string;
+  workloadLevel: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL';
+  workloadScore: number;
+  threshold: number;
+  sprintName?: string;
+  notes?: string;
+  createdByName?: string;
+}
+
+export interface SaveWorkloadRequest {
+  teamId?: number;
+  startDate: string;
+  endDate: string;
+  workloadLevel: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL';
+  workloadScore?: number;
+  threshold?: number;
+  sprintName?: string;
+  notes?: string;
+}
+
 export interface TeamCalendarDto {
   from: string;
   to: string;
@@ -110,6 +146,7 @@ export interface TeamCalendarDto {
   holidays?: PublicHolidayDto[];
   teamSize?: number;
   conflictThreshold?: number;
+  workloads?: WeeklyWorkloadDto[];
 }
 
 export interface TeamCalendarEntry {

@@ -15,6 +15,7 @@ C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\le
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\domain\LeaveType.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\domain\PublicHoliday.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\domain\Team.java
+C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\domain\TeamWeeklyWorkload.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\domain\User.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\ApprovalActionRequest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\ApprovalHistoryDto.java
@@ -27,9 +28,11 @@ C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\le
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\LoginRequest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\LoginResponse.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\PolicyDto.java
+C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\SaveWorkloadRequest.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\TeamCalendarDto.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\UserDto.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\UserSummaryDto.java
+C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\dto\WeeklyWorkloadDto.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\exception\GlobalExceptionHandler.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\exception\IllegalStateTransitionException.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\exception\InsufficientBalanceException.java
@@ -42,6 +45,7 @@ C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\le
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\repository\LeaveTypeRepository.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\repository\PublicHolidayRepository.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\repository\TeamRepository.java
+C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\repository\TeamWeeklyWorkloadRepository.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\repository\UserRepository.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\security\CustomUserDetails.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\security\CustomUserDetailsService.java
@@ -55,3 +59,4 @@ C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\le
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\service\LeaveService.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\service\LeaveStateMachine.java
 C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\service\WorkingDayService.java
+C:\Users\abhin\OneDrive\Desktop\Projects\Hack_Forge\backend\src\main\java\com\leavemanager\service\WorkloadService.java

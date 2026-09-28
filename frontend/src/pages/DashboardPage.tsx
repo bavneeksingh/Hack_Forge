@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
-import type { LeaveRequestDto, BalanceDto } from '../types';
+import type { LeaveRequestDto, BalanceDto, WeeklyWorkloadDto } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
@@ -34,6 +34,12 @@ export default function DashboardPage() {
     queryFn: () => api.get<LeaveRequestDto[]>('/hr/pending', { params: { filter: 'ALL' } }).then((r) => r.data),
     enabled: isHr,
     refetchInterval: 10000,
+  });
+
+  const { data: workloads } = useQuery({
+    queryKey: ['manager-workloads'],
+    queryFn: () => api.get<WeeklyWorkloadDto[]>('/manager/workloads').then((r) => r.data),
+    enabled: isManager,
   });
 
   const pending = leaves?.filter((l) => l.status.includes('PENDING')).length || 0;
@@ -164,6 +170,89 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Manager / HR Weekly Workload & Dynamic Thresholds Section */}
+      {isManager && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-primary)', fontSize: '1.25rem' }}>📊</span>
+              Team Workload & Adaptive Thresholds
+            </h3>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/workload')}>
+              Manage Weekly Workloads →
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {workloads && workloads.length > 0 ? (
+              workloads.slice(0, 3).map((w) => {
+                const isHigh = w.workloadLevel === 'HIGH' || w.workloadLevel === 'CRITICAL';
+                const color = w.workloadLevel === 'CRITICAL' ? '#ef4444' : w.workloadLevel === 'HIGH' ? '#f59e0b' : w.workloadLevel === 'LOW' ? '#10b981' : '#3b82f6';
+                const bg = w.workloadLevel === 'CRITICAL' ? 'rgba(239, 68, 68, 0.08)' : w.workloadLevel === 'HIGH' ? 'rgba(245, 158, 11, 0.08)' : w.workloadLevel === 'LOW' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)';
+                const icon = w.workloadLevel === 'CRITICAL' ? '🚨' : w.workloadLevel === 'HIGH' ? '🔥' : w.workloadLevel === 'LOW' ? '🌿' : '⚡';
+
+                return (
+                  <div
+                    key={w.id}
+                    className="card animate-fade-in"
+                    style={{
+                      padding: '1.1rem',
+                      borderLeft: `4px solid ${color}`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text)' }}>
+                          {w.sprintName || 'Sprint Week'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>
+                          📅 {w.startDate} → {w.endDate}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          background: bg,
+                          color: color,
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '999px',
+                        }}
+                      >
+                        {icon} {w.workloadLevel}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)', fontSize: '0.75rem' }}>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>
+                        Conflict Threshold:
+                      </span>
+                      <strong style={{ color: color, fontSize: '0.875rem' }}>
+                        {Math.round(w.threshold * 100)}% ({isHigh ? 'High Workload' : 'Standard'})
+                      </strong>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="card" style={{ gridColumn: '1 / -1', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--color-text)' }}>Standard Baseline Threshold (40%)</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
+                    No upcoming high-workload weeks configured. The default team threshold applies.
+                  </div>
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={() => navigate('/workload')}>
+                  ✦ Set Sprint Workload
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
