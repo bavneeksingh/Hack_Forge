@@ -200,11 +200,11 @@ export default function DashboardPage() {
               </div>
             </div>
             {/* Progress bar */}
-            <div style={{ marginTop: '0.75rem', height: '4px', borderRadius: '2px', background: 'var(--color-surface)', overflow: 'hidden' }}>
+            <div style={{ marginTop: '0.75rem', height: '6px', borderRadius: '3px', background: 'var(--color-border)', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
-                  borderRadius: '2px',
+                  borderRadius: '3px',
                   background: 'var(--gradient-primary)',
                   width: `${b.entitled > 0 ? ((b.used + b.pending) / b.entitled) * 100 : 0}%`,
                   transition: 'width 0.5s ease',
