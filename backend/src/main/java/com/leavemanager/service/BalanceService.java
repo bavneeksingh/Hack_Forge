@@ -6,6 +6,8 @@ import com.leavemanager.domain.User;
 import com.leavemanager.exception.InsufficientBalanceException;
 import com.leavemanager.exception.ResourceNotFoundException;
 import com.leavemanager.repository.LeaveBalanceRepository;
+import com.leavemanager.repository.LeaveTypeRepository;
+import com.leavemanager.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -108,17 +110,45 @@ public class BalanceService {
 
     /**
      * Get all balances for an employee in the current year.
+     * Auto-initializes balances if none exist (e.g., for HR/Manager users).
      */
     public List<LeaveBalance> getEmployeeBalances(Long employeeId) {
         int year = LocalDate.now(clock).getYear();
-        return balanceRepository.findByEmployeeIdAndYear(employeeId, year);
+        List<LeaveBalance> balances = balanceRepository.findByEmployeeIdAndYear(employeeId, year);
+
+        // Auto-initialize if no balances exist for this user/year
+        if (balances.isEmpty() && userRepository != null && leaveTypeRepository != null) {
+            User employee = userRepository.findById(employeeId).orElse(null);
+            List<LeaveType> allTypes = leaveTypeRepository.findAll();
+            if (employee != null && !allTypes.isEmpty()) {
+                for (LeaveType lt : allTypes) {
+                    getOrInitializeBalance(employee, lt, year);
+                }
+                balances = balanceRepository.findByEmployeeIdAndYear(employeeId, year);
+            }
+        }
+
+        return balances;
     }
 
     /**
      * Get all balances for the current year (HR view).
+     * Auto-initializes balances for all active users if missing.
      */
     public List<LeaveBalance> getAllBalances() {
         int year = LocalDate.now(clock).getYear();
+        if (userRepository != null && leaveTypeRepository != null) {
+            List<User> allUsers = userRepository.findAll();
+            List<LeaveType> allTypes = leaveTypeRepository.findAll();
+            for (User user : allUsers) {
+                List<LeaveBalance> userBalances = balanceRepository.findByEmployeeIdAndYear(user.getId(), year);
+                if (userBalances.isEmpty()) {
+                    for (LeaveType lt : allTypes) {
+                        getOrInitializeBalance(user, lt, year);
+                    }
+                }
+            }
+        }
         return balanceRepository.findByYear(year);
     }
 

@@ -90,12 +90,10 @@ export default function DashboardPage() {
           <div className="stat-value">{totalUsed}</div>
           <div className="stat-label">Days Used</div>
         </div>
-        {!isManager && (
-          <div className="stat-card">
-            <div className="stat-value">{balances?.reduce((sum, b) => sum + b.available, 0) || 0}</div>
-            <div className="stat-label">Days Available</div>
-          </div>
-        )}
+        <div className="stat-card">
+          <div className="stat-value">{balances?.reduce((sum, b) => sum + b.available, 0) || 0}</div>
+          <div className="stat-label">Days Available</div>
+        </div>
       </div>
 
       {/* Manager / HR Team Pending Approvals Section */}
@@ -117,8 +115,6 @@ export default function DashboardPage() {
                 key={p.id}
                 className="card animate-fade-in"
                 style={{
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  background: 'rgba(30, 41, 59, 0.95)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}
@@ -128,7 +124,7 @@ export default function DashboardPage() {
                     <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--color-text)' }}>
                       {p.requester.name}
                     </div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--color-primary-light)', fontWeight: 500, marginTop: '0.125rem' }}>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontWeight: 500, marginTop: '0.125rem' }}>
                       {p.type} • {p.workingDays} working day{p.workingDays > 1 ? 's' : ''}
                     </div>
                   </div>

@@ -255,21 +255,37 @@ public class LeaveService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
-        Long managerId;
-        Team team = user.getTeam();
-        if (user.getRole() == com.leavemanager.domain.enums.Role.MANAGER) {
-            managerId = user.getId();
-        } else if (user.getManager() != null) {
-            managerId = user.getManager().getId();
-        } else if (team != null && team.getManager() != null) {
-            managerId = team.getManager().getId();
-        } else {
-            managerId = user.getId();
-        }
-
         List<LeaveStatus> statuses = List.of(
                 LeaveStatus.APPROVED, LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR);
-        List<LeaveRequest> leaves = leaveRequestRepository.findTeamLeaves(managerId, from, to, statuses);
+        List<LeaveRequest> leaves;
+        int teamSize;
+        double threshold;
+
+        if (user.getRole() == com.leavemanager.domain.enums.Role.HR) {
+            leaves = leaveRequestRepository.findAllLeavesInRange(from, to, statuses);
+            long activeCount = userRepository.findAll().stream().filter(User::isActive).count();
+            teamSize = Math.max((int) activeCount, 1);
+            threshold = 0.40;
+        } else {
+            Long managerId;
+            Team team = user.getTeam();
+            if (user.getRole() == com.leavemanager.domain.enums.Role.MANAGER) {
+                managerId = user.getId();
+            } else if (user.getManager() != null) {
+                managerId = user.getManager().getId();
+            } else if (team != null && team.getManager() != null) {
+                managerId = team.getManager().getId();
+            } else {
+                managerId = user.getId();
+            }
+
+            leaves = leaveRequestRepository.findTeamLeaves(managerId, from, to, statuses);
+            List<User> teammates = userRepository.findByManagerId(managerId);
+            teamSize = Math.max(teammates.size(), 1);
+            threshold = team != null && team.getConflictThreshold() != null
+                    ? team.getConflictThreshold().doubleValue()
+                    : 0.40;
+        }
 
         List<TeamCalendarDto.TeamCalendarEntry> entries = leaves.stream()
                 .map(lr -> new TeamCalendarDto.TeamCalendarEntry(
@@ -287,12 +303,6 @@ public class LeaveService {
                 .stream()
                 .map(ph -> new TeamCalendarDto.PublicHolidayDto(ph.getDate(), ph.getName()))
                 .collect(Collectors.toList());
-
-        List<User> teammates = userRepository.findByManagerId(managerId);
-        int teamSize = Math.max(teammates.size(), 1);
-        double threshold = team != null && team.getConflictThreshold() != null
-                ? team.getConflictThreshold().doubleValue()
-                : 0.40;
 
         return new TeamCalendarDto(from, to, entries, holidays, teamSize, threshold);
     }

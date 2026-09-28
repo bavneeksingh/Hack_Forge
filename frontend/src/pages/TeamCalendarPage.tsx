@@ -38,10 +38,6 @@ export default function TeamCalendarPage() {
   // Teammates map
   const byEmployee = new Map<string, TeamCalendarEntry[]>();
 
-  // Ensure known teammates are present
-  const defaultMembers = ['Alice Manager', 'Diana Dev', 'Frank Dev', 'Charlie Dev'];
-  defaultMembers.forEach((name) => byEmployee.set(name, []));
-
   calendar?.entries.forEach((e) => {
     const arr = byEmployee.get(e.employeeName) || [];
     arr.push(e);
@@ -85,12 +81,34 @@ export default function TeamCalendarPage() {
     ) || [];
 
     const awayCount = awayEntries.length;
-    const teamSize = calendar?.teamSize || 3;
+    const teamSize = calendar?.teamSize || 1;
     const threshold = calendar?.conflictThreshold || 0.4;
-    // awayPct if current user also takes leave: (awayCount + 1) / teamSize
-    const awayPct = (awayCount + 1) / teamSize;
-    const isConflict = !isWeekend && !holiday && awayPct >= threshold;
-    const isModerate = !isWeekend && !holiday && awayCount > 0 && !isConflict;
+
+    // Only flag conflict when there are actually people away AND prospective absence exceeds threshold.
+    let isConflict = false;
+    let isModerate = false;
+    let awayPct = 0;
+
+    if (!isWeekend && !holiday) {
+      if (awayCount > 0) {
+        if (teamSize > 1) {
+          // If 1 or more teammates are away, check if current user taking leave exceeds capacity
+          const prospectiveAwayPct = (awayCount + 1) / teamSize;
+          awayPct = awayCount / teamSize;
+          isConflict = prospectiveAwayPct >= threshold;
+          isModerate = !isConflict;
+        } else {
+          awayPct = 1.0;
+          isModerate = true;
+        }
+      } else {
+        // Zero teammates away -> full capacity, 100% available, never a conflict
+        awayPct = 0;
+        isConflict = false;
+        isModerate = false;
+      }
+    }
+
     const isAvailable = !isWeekend && !holiday && awayCount === 0;
 
     return {

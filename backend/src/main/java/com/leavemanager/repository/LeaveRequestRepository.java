@@ -46,6 +46,11 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
                                                @Param("statuses") List<LeaveStatus> statuses,
                                                @Param("excludeEmployeeId") Long excludeEmployeeId);
 
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.startDate <= :endDate AND lr.endDate >= :startDate AND lr.status IN :statuses")
+    List<LeaveRequest> findAllLeavesInRange(@Param("startDate") LocalDate startDate,
+                                            @Param("endDate") LocalDate endDate,
+                                            @Param("statuses") List<LeaveStatus> statuses);
+
     @Query("SELECT lr FROM LeaveRequest lr WHERE lr.status = :status ORDER BY lr.createdAt ASC")
     List<LeaveRequest> findByStatusOrderByCreatedAtAsc(@Param("status") LeaveStatus status);
 }
