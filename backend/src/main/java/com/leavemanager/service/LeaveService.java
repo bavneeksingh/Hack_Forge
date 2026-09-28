@@ -41,6 +41,7 @@ public class LeaveService {
     private final WorkloadService workloadService;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    private final EmailService emailService;
 
     public LeaveService(LeaveRequestRepository leaveRequestRepository,
                         LeaveTypeRepository leaveTypeRepository,
@@ -53,7 +54,8 @@ public class LeaveService {
                         ConflictService conflictService,
                         WorkloadService workloadService,
                         ObjectMapper objectMapper,
-                        Clock clock) {
+                        Clock clock,
+                        EmailService emailService) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.leaveTypeRepository = leaveTypeRepository;
         this.userRepository = userRepository;
@@ -66,6 +68,7 @@ public class LeaveService {
         this.workloadService = workloadService;
         this.objectMapper = objectMapper;
         this.clock = clock;
+        this.emailService = emailService;
     }
 
     // ─── Employee Operations ───────────────────────────────────────────
@@ -225,6 +228,9 @@ public class LeaveService {
         request.setDueAt(Instant.now(clock).plus(timeoutHours, ChronoUnit.HOURS));
 
         leaveRequestRepository.save(request);
+        
+        emailService.sendStatusChangeEmail(request);
+        
         return toDto(request);
     }
 
@@ -244,6 +250,8 @@ public class LeaveService {
         request.setCurrentAssignee(null);
         request.setDueAt(null);
         leaveRequestRepository.save(request);
+        
+        emailService.sendStatusChangeEmail(request);
 
         return toDto(request);
     }
@@ -355,6 +363,8 @@ public class LeaveService {
         request.setDueAt(null);
         leaveRequestRepository.save(request);
 
+        emailService.sendStatusChangeEmail(request);
+
         return toDto(request);
     }
 
@@ -374,6 +384,8 @@ public class LeaveService {
         request.setCurrentAssignee(null);
         request.setDueAt(null);
         leaveRequestRepository.save(request);
+
+        emailService.sendStatusChangeEmail(request);
 
         return toDto(request);
     }

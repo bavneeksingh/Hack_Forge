@@ -24,7 +24,7 @@ INSERT INTO users (email, password, name, role, manager_id, team_id, join_date, 
 ('charlie@company.com', '$2b$10$LZn8yyfjLvySaYxW6Unre.CaqIcl1Hfneu/QNzIDB9yh69BNCy09C', 'Charlie Dev', 'EMPLOYEE', 1, 1, '2024-03-01', TRUE);
 
 INSERT INTO users (email, password, name, role, manager_id, team_id, join_date, active) VALUES
-('diana@company.com', '$2b$10$LZn8yyfjLvySaYxW6Unre.CaqIcl1Hfneu/QNzIDB9yh69BNCy09C', 'Diana Dev', 'EMPLOYEE', 1, 1, '2024-06-15', TRUE);
+('bavneeksingh2004@gmail.com', '$2b$10$LZn8yyfjLvySaYxW6Unre.CaqIcl1Hfneu/QNzIDB9yh69BNCy09C', 'Diana Dev', 'EMPLOYEE', 1, 1, '2024-06-15', TRUE);
 
 INSERT INTO users (email, password, name, role, manager_id, team_id, join_date, active) VALUES
 ('eve@company.com', '$2b$10$LZn8yyfjLvySaYxW6Unre.CaqIcl1Hfneu/QNzIDB9yh69BNCy09C', 'Eve Designer', 'EMPLOYEE', 2, 2, '2025-07-01', TRUE);
