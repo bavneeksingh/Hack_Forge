@@ -1,5 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth';
+import api from './api';
+import type { LeaveRequestDto } from './types';
 
 const navItems = {
   EMPLOYEE: [
@@ -33,9 +36,36 @@ export default function Layout() {
   const navigate = useNavigate();
   const items = navItems[user?.role || 'EMPLOYEE'];
 
+  const isManager = user?.role === 'MANAGER' || user?.role === 'HR';
+  const isHr = user?.role === 'HR';
+
+  const { data: managerPending } = useQuery({
+    queryKey: ['manager-pending'],
+    queryFn: () => api.get<LeaveRequestDto[]>('/manager/pending').then((r) => r.data),
+    enabled: isManager,
+    refetchInterval: 10000,
+  });
+
+  const { data: hrPending } = useQuery({
+    queryKey: ['hr-pending', 'ALL'],
+    queryFn: () => api.get<LeaveRequestDto[]>('/hr/pending', { params: { filter: 'ALL' } }).then((r) => r.data),
+    enabled: isHr,
+    refetchInterval: 10000,
+  });
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const getBadgeCount = (path: string) => {
+    if (path === '/approvals' && managerPending && managerPending.length > 0) {
+      return managerPending.length;
+    }
+    if (path === '/hr-queue' && hrPending && hrPending.length > 0) {
+      return hrPending.length;
+    }
+    return 0;
   };
 
   return (
@@ -73,30 +103,48 @@ export default function Layout() {
 
         {/* Navigation */}
         <nav style={{ flex: 1 }}>
-          {items.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 1.25rem',
-                margin: '0.125rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.875rem',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--color-primary-light)' : 'var(--color-text-secondary)',
-                background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-              })}
-            >
-              <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+          {items.map((item) => {
+            const badgeCount = getBadgeCount(item.path);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                style={({ isActive }) => ({
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem 1.25rem',
+                  margin: '0.125rem 0.75rem',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? 'var(--color-primary-light)' : 'var(--color-text-secondary)',
+                  background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                })}
+              >
+                <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {badgeCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--color-warning)',
+                      color: '#0f172a',
+                      fontSize: '0.6875rem',
+                      fontWeight: 700,
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '999px',
+                      boxShadow: '0 0 8px rgba(245, 158, 11, 0.4)',
+                    }}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* User info */}

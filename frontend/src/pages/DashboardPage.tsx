@@ -3,9 +3,14 @@ import api from '../api';
 import type { LeaveRequestDto, BalanceDto } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const isManager = user?.role === 'MANAGER' || user?.role === 'HR';
+  const isHr = user?.role === 'HR';
 
   const { data: leaves } = useQuery({
     queryKey: ['my-leaves'],
@@ -17,24 +22,65 @@ export default function DashboardPage() {
     queryFn: () => api.get<BalanceDto[]>('/balance/me').then((r) => r.data),
   });
 
+  const { data: managerPending } = useQuery({
+    queryKey: ['manager-pending'],
+    queryFn: () => api.get<LeaveRequestDto[]>('/manager/pending').then((r) => r.data),
+    enabled: isManager,
+    refetchInterval: 10000,
+  });
+
+  const { data: hrPending } = useQuery({
+    queryKey: ['hr-pending', 'ALL'],
+    queryFn: () => api.get<LeaveRequestDto[]>('/hr/pending', { params: { filter: 'ALL' } }).then((r) => r.data),
+    enabled: isHr,
+    refetchInterval: 10000,
+  });
+
   const pending = leaves?.filter((l) => l.status.includes('PENDING')).length || 0;
   const approved = leaves?.filter((l) => l.status === 'APPROVED').length || 0;
   const totalUsed = balances?.reduce((sum, b) => sum + b.used, 0) || 0;
+  const teamApprovalCount = isHr ? (hrPending?.length || 0) : (managerPending?.length || 0);
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            Welcome back, <strong style={{ color: 'var(--color-text)' }}>{user?.name}</strong> ({user?.role})
+          </p>
+        </div>
         <button className="btn btn-primary" onClick={() => navigate('/apply')}>
           ✦ Apply for Leave
         </button>
       </div>
 
       {/* Stats */}
-      <div className="stat-grid">
+      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
+        {isManager && (
+          <div
+            className="stat-card"
+            style={{
+              border: teamApprovalCount > 0 ? '1px solid var(--color-warning)' : '1px solid var(--color-border)',
+              background: teamApprovalCount > 0 ? 'rgba(245, 158, 11, 0.08)' : 'var(--color-surface-2)',
+              cursor: 'pointer',
+            }}
+            onClick={() => navigate(isHr ? '/hr-queue' : '/approvals')}
+          >
+            <div
+              className="stat-value"
+              style={{ color: teamApprovalCount > 0 ? 'var(--color-warning)' : 'var(--color-text)' }}
+            >
+              {teamApprovalCount}
+            </div>
+            <div className="stat-label">
+              ⚡ {isHr ? 'HR Queue Pending' : 'Awaiting Your Approval'}
+            </div>
+          </div>
+        )}
         <div className="stat-card">
           <div className="stat-value">{pending}</div>
-          <div className="stat-label">Pending Requests</div>
+          <div className="stat-label">My Pending Requests</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{approved}</div>
@@ -44,14 +90,90 @@ export default function DashboardPage() {
           <div className="stat-value">{totalUsed}</div>
           <div className="stat-label">Days Used</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{balances?.reduce((sum, b) => sum + b.available, 0) || 0}</div>
-          <div className="stat-label">Days Available</div>
-        </div>
+        {!isManager && (
+          <div className="stat-card">
+            <div className="stat-value">{balances?.reduce((sum, b) => sum + b.available, 0) || 0}</div>
+            <div className="stat-label">Days Available</div>
+          </div>
+        )}
       </div>
 
+      {/* Manager / HR Team Pending Approvals Section */}
+      {isManager && managerPending && managerPending.length > 0 && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-warning)', fontSize: '1.25rem' }}>⚡</span>
+              Action Required: Team Approvals ({managerPending.length})
+            </h3>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/approvals')}>
+              Go to Approvals Page →
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+            {managerPending.map((p) => (
+              <div
+                key={p.id}
+                className="card animate-fade-in"
+                style={{
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  background: 'rgba(30, 41, 59, 0.95)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--color-text)' }}>
+                      {p.requester.name}
+                    </div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--color-primary-light)', fontWeight: 500, marginTop: '0.125rem' }}>
+                      {p.type} • {p.workingDays} working day{p.workingDays > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <StatusBadge status={p.status} escalated={p.escalated} conflictFlagged={p.conflictFlagged} />
+                </div>
+
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                  📅 {p.startDate} → {p.endDate}
+                </div>
+
+                {p.reason && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontStyle: 'italic', marginBottom: '0.75rem' }}>
+                    "{p.reason}"
+                  </div>
+                )}
+
+                {p.conflictFlagged && (
+                  <div style={{ padding: '0.375rem 0.5rem', background: 'rgba(239,68,68,0.1)', borderRadius: '6px', fontSize: '0.6875rem', color: '#f87171', marginBottom: '0.75rem' }}>
+                    ⚠ Conflict: Teammate overlap detected
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => navigate('/approvals')}
+                    style={{ flex: 1 }}
+                  >
+                    ✓ Review in Approvals
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => navigate(`/requests/${p.id}`)}
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Balance cards */}
-      <h3 style={{ marginBottom: '1rem', color: 'var(--color-text)' }}>Leave Balance</h3>
+      <h3 style={{ marginBottom: '1rem', color: 'var(--color-text)' }}>My Leave Balance</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {balances?.map((b) => (
           <div key={b.id} className="card">
@@ -94,7 +216,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent requests */}
-      <h3 style={{ marginBottom: '1rem', color: 'var(--color-text)' }}>Recent Requests</h3>
+      <h3 style={{ marginBottom: '1rem', color: 'var(--color-text)' }}>My Recent Requests</h3>
       {leaves && leaves.length > 0 ? (
         <div className="table-container">
           <table>
@@ -105,16 +227,25 @@ export default function DashboardPage() {
                 <th>Days</th>
                 <th>Status</th>
                 <th>Assignee</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {leaves.slice(0, 5).map((l) => (
-                <tr key={l.id} onClick={() => navigate(`/requests/${l.id}`)} style={{ cursor: 'pointer' }}>
+                <tr key={l.id}>
                   <td style={{ color: 'var(--color-text)', fontWeight: 500 }}>{l.type}</td>
                   <td>{l.startDate} → {l.endDate}</td>
                   <td>{l.workingDays}</td>
                   <td><StatusBadge status={l.status} escalated={l.escalated} conflictFlagged={l.conflictFlagged} /></td>
                   <td>{l.currentAssignee?.name || '—'}</td>
+                  <td>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => navigate(`/requests/${l.id}`)}
+                    >
+                      Details
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -122,7 +253,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="empty-state">
-          <p>No leave requests yet. Click "Apply for Leave" to get started.</p>
+          <p>No personal leave requests submitted yet.</p>
         </div>
       )}
     </div>

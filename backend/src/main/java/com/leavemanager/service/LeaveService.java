@@ -192,9 +192,9 @@ public class LeaveService {
 
     @Transactional(readOnly = true)
     public List<LeaveRequestDto> getManagerPending(Long managerId) {
-        // Get requests where the manager is the current assignee
+        // Get requests assigned to this manager or from their team members
         List<LeaveRequest> assigned = leaveRequestRepository
-                .findByCurrentAssigneeIdAndStatus(managerId, LeaveStatus.PENDING_MANAGER);
+                .findManagerPending(managerId, LeaveStatus.PENDING_MANAGER);
 
         return assigned.stream().map(this::toDto).collect(Collectors.toList());
     }

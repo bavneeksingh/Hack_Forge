@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { UserDto, LoginRequest, LoginResponse } from './types';
 import api from './api';
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserDto | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (req: LoginRequest) => {
+    queryClient.clear();
     const response = await api.post<LoginResponse>('/auth/login', req);
     const { token: t, user: u } = response.data;
     setToken(t);
@@ -38,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    queryClient.clear();
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');

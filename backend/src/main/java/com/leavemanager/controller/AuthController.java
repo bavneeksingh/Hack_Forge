@@ -27,6 +27,9 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(authService.getCurrentUser(userDetails.getUserId()));
     }
 }

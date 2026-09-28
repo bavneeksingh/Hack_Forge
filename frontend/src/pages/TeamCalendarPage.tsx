@@ -76,8 +76,8 @@ export default function TeamCalendarPage() {
 
           {/* Employee rows */}
           {[...byEmployee.entries()].map(([name, entries]) => (
-            <>
-              <div key={name} style={{ padding: '0.5rem', fontWeight: 500, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div key={name} style={{ display: 'contents' }}>
+              <div style={{ padding: '0.5rem', fontWeight: 500, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {name}
               </div>
               {days.map((d) => {
@@ -87,7 +87,7 @@ export default function TeamCalendarPage() {
                 const entry = entries.find((e) => dateStr >= e.startDate && dateStr <= e.endDate);
                 return (
                   <div
-                    key={d}
+                    key={`${name}-${d}`}
                     style={{
                       height: '28px',
                       background: entry ? (statusColors[entry.status] || 'rgba(100,116,139,0.2)') : isWeekend ? 'rgba(100,116,139,0.05)' : 'transparent',
@@ -98,7 +98,7 @@ export default function TeamCalendarPage() {
                   />
                 );
               })}
-            </>
+            </div>
           ))}
         </div>
 

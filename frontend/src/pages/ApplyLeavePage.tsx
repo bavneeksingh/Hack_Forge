@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api';
@@ -10,18 +10,10 @@ export default function ApplyLeavePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [leaveTypeId, setLeaveTypeId] = useState<number>(0);
+  const [leaveTypeId, setLeaveTypeId] = useState<number>(1);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
-
-  // Fetch leave types from balance endpoint (workaround: use balance to get types)
-  const { data: balances } = useQuery({
-    queryKey: ['my-balance'],
-    queryFn: () => api.get('/balance/me').then((r) => r.data),
-  });
-
-
 
   // Preview query
   const { data: preview, isFetching: previewLoading } = useQuery({
@@ -41,21 +33,14 @@ export default function ApplyLeavePage() {
       toast.success('Leave request submitted successfully!');
       queryClient.invalidateQueries({ queryKey: ['my-leaves'] });
       queryClient.invalidateQueries({ queryKey: ['my-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['manager-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['team-calendar'] });
       navigate('/requests');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Failed to submit leave request');
     },
   });
-
-  // Auto-set leave type ID based on actual leave type IDs
-  useEffect(() => {
-    if (balances && balances.length > 0 && leaveTypeId === 0) {
-      // We need to get actual leave type IDs. Let's use position-based mapping for seed data:
-      // Annual Leave = 1, Sick Leave = 2, Personal Leave = 3
-      setLeaveTypeId(1);
-    }
-  }, [balances, leaveTypeId]);
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '700px' }}>

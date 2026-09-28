@@ -20,6 +20,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     List<LeaveRequest> findByCurrentAssigneeIdAndStatus(Long assigneeId, LeaveStatus status);
 
+    @Query("SELECT lr FROM LeaveRequest lr WHERE (lr.currentAssignee.id = :managerId OR (lr.currentAssignee IS NULL AND lr.requester.manager.id = :managerId)) AND lr.status = :status ORDER BY lr.createdAt DESC")
+    List<LeaveRequest> findManagerPending(@Param("managerId") Long managerId, @Param("status") LeaveStatus status);
+
     List<LeaveRequest> findByStatus(LeaveStatus status);
 
     @Query("SELECT lr FROM LeaveRequest lr WHERE lr.status IN :statuses AND lr.dueAt < :now")
