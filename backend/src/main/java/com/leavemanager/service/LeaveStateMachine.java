@@ -8,6 +8,8 @@ import com.leavemanager.domain.enums.LeaveStatus;
 import com.leavemanager.exception.IllegalStateTransitionException;
 import com.leavemanager.exception.UnauthorizedActionException;
 import com.leavemanager.repository.ApprovalHistoryRepository;
+import com.leavemanager.repository.LeaveRequestRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -23,10 +25,19 @@ import java.util.Set;
 public class LeaveStateMachine {
 
     private final ApprovalHistoryRepository approvalHistoryRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final Clock clock;
 
     public LeaveStateMachine(ApprovalHistoryRepository approvalHistoryRepository, Clock clock) {
+        this(approvalHistoryRepository, null, clock);
+    }
+
+    @Autowired
+    public LeaveStateMachine(ApprovalHistoryRepository approvalHistoryRepository,
+                             @org.springframework.context.annotation.Lazy LeaveRequestRepository leaveRequestRepository,
+                             Clock clock) {
         this.approvalHistoryRepository = approvalHistoryRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
         this.clock = clock;
     }
 
@@ -51,6 +62,11 @@ public class LeaveStateMachine {
         // Apply the transition
         request.setStatus(newStatus);
         request.setUpdatedAt(Instant.now(clock));
+
+        // If request is not yet persisted, save it first so foreign key is populated
+        if (request.getId() == null && leaveRequestRepository != null) {
+            request = leaveRequestRepository.save(request);
+        }
 
         // Write audit trail
         ApprovalHistory history = new ApprovalHistory(

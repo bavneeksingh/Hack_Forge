@@ -105,11 +105,11 @@ public class LeaveService {
         }
         request.setDueAt(Instant.now(clock).plus(timeoutHours, ChronoUnit.HOURS));
 
-        // Transition via state machine (status: null -> PENDING_MANAGER)
-        stateMachine.transition(request, LeaveAction.SUBMIT, requester, null);
-
         // Check conflict (informational only)
         conflictService.checkAndSetConflict(request, requester);
+
+        // Transition via state machine (status: null -> PENDING_MANAGER)
+        stateMachine.transition(request, LeaveAction.SUBMIT, requester, null);
 
         LeaveRequest saved = leaveRequestRepository.save(request);
         return toDto(saved);

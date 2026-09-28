@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import type { LeaveRequestDto } from '../types';
@@ -5,6 +6,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../toast';
 
 export default function MyRequestsPage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -62,17 +64,25 @@ export default function MyRequestsPage() {
                   <td><StatusBadge status={l.status} escalated={l.escalated} conflictFlagged={l.conflictFlagged} /></td>
                   <td>{l.currentAssignee?.name || '—'}</td>
                   <td>
-                    {canCancel(l.status) && (
+                    <div style={{ display: 'flex', gap: '0.375rem' }}>
                       <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => {
-                          if (confirm('Cancel this leave request?')) cancelMutation.mutate(l.id);
-                        }}
-                        disabled={cancelMutation.isPending}
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => navigate(`/requests/${l.id}`)}
                       >
-                        Cancel
+                        Details
                       </button>
-                    )}
+                      {canCancel(l.status) && (
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => {
+                            if (confirm('Cancel this leave request?')) cancelMutation.mutate(l.id);
+                          }}
+                          disabled={cancelMutation.isPending}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

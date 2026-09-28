@@ -13,6 +13,7 @@ import HrQueuePage from './pages/HrQueuePage';
 import AllBalancesPage from './pages/AllBalancesPage';
 import PoliciesPage from './pages/PoliciesPage';
 import AuditLogPage from './pages/AuditLogPage';
+import LeaveDetailPage from './pages/LeaveDetailPage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -48,6 +49,7 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="apply" element={<ApplyLeavePage />} />
               <Route path="requests" element={<MyRequestsPage />} />
+              <Route path="requests/:id" element={<LeaveDetailPage />} />
               <Route path="balance" element={<BalancePage />} />
               
               {/* Manager routes (accessible to MANAGER and HR) */}

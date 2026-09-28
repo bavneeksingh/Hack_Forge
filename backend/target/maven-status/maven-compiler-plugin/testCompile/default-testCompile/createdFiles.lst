@@ -1,5 +1,5 @@
-com/leavemanager/service/WorkingDayServiceTest.class
-com/leavemanager/service/LeaveStateMachineTest.class
-com/leavemanager/service/EscalationServiceTest.class
-com/leavemanager/service/ConflictServiceTest.class
-com/leavemanager/service/BalanceServiceTest.class
+com\leavemanager\service\ConflictServiceTest.class
+com\leavemanager\service\EscalationServiceTest.class
+com\leavemanager\service\BalanceServiceTest.class
+com\leavemanager\service\LeaveStateMachineTest.class
+com\leavemanager\service\WorkingDayServiceTest.class
