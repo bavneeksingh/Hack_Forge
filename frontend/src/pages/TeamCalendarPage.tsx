@@ -1,28 +1,62 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth';
 import api from '../api';
 import type { TeamCalendarDto, TeamCalendarEntry } from '../types';
 
+/* ── Helpers ──────────────────────────────────────────────────── */
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const fmtDate = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+const AVATAR_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+  '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6',
+];
+const getAvatarColor = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+};
+
+const STATUS_CONFIG: Record<string, { bg: string; color: string; label: string; dot: string }> = {
+  APPROVED: { bg: 'rgba(34, 197, 94, 0.15)', color: '#16a34a', label: 'Approved', dot: '#22c55e' },
+  PENDING_MANAGER: { bg: 'rgba(245, 158, 11, 0.15)', color: '#d97706', label: 'Pending', dot: '#f59e0b' },
+  PENDING_HR: { bg: 'rgba(245, 158, 11, 0.15)', color: '#d97706', label: 'Pending HR', dot: '#f59e0b' },
+  REJECTED: { bg: 'rgba(239, 68, 68, 0.15)', color: '#dc2626', label: 'Rejected', dot: '#ef4444' },
+  CANCELLED: { bg: 'rgba(100, 116, 139, 0.12)', color: '#64748b', label: 'Cancelled', dot: '#94a3b8' },
+};
+
+/* ── Component ────────────────────────────────────────────────── */
 export default function TeamCalendarPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role || 'EMPLOYEE';
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth());
   const [year, setYear] = useState(today.getFullYear());
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
+  const todayStr = fmtDate(today.getFullYear(), today.getMonth(), today.getDate());
   const lastDay = new Date(year, month + 1, 0).getDate();
   const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
   const startDay = isCurrentMonth ? today.getDate() : 1;
   const days = Array.from({ length: lastDay - startDay + 1 }, (_, i) => startDay + i);
 
-  const from = isCurrentMonth
-    ? `${year}-${String(month + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    : `${year}-${String(month + 1).padStart(2, '0')}-01`;
-  const to = `${year}-${String(month + 1).padStart(2, '0')}-${lastDay}`;
-
-  // Default selected date to today if in current month/year, else the 1st
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const initialSelected = isCurrentMonth ? todayStr : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+  const from = isCurrentMonth ? fmtDate(year, month, today.getDate()) : fmtDate(year, month, 1);
+  const to = fmtDate(year, month, lastDay);
+  const initialSelected = isCurrentMonth ? todayStr : fmtDate(year, month, 1);
   const [selectedDate, setSelectedDate] = useState<string>(initialSelected);
 
   const { data: calendar, isLoading } = useQuery({
@@ -30,540 +64,422 @@ export default function TeamCalendarPage() {
     queryFn: () => api.get<TeamCalendarDto>('/leaves/team-calendar', { params: { from, to } }).then((r) => r.data),
   });
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-
-  // Teammates map
-  const byEmployee = new Map<string, TeamCalendarEntry[]>();
-
-  calendar?.entries.forEach((e) => {
-    const arr = byEmployee.get(e.employeeName) || [];
-    arr.push(e);
-    byEmployee.set(e.employeeName, arr);
-  });
-
   const canGoPrev = !isCurrentMonth && !(year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth()));
+  const prevMonth = () => { if (!canGoPrev) return; if (month === 0) { setMonth(11); setYear(year - 1); } else setMonth(month - 1); };
+  const nextMonth = () => { if (month === 11) { setMonth(0); setYear(year + 1); } else setMonth(month + 1); };
+  const goToToday = () => { setMonth(today.getMonth()); setYear(today.getFullYear()); setSelectedDate(todayStr); };
 
-  const prevMonth = () => {
-    if (!canGoPrev) return;
-    if (month === 0) {
-      setMonth(11);
-      setYear(year - 1);
-    } else {
-      setMonth(month - 1);
-    }
-  };
+  const byEmployee = useMemo(() => {
+    const map = new Map<string, TeamCalendarEntry[]>();
+    calendar?.entries.forEach((e) => {
+      const arr = map.get(e.employeeName) || [];
+      arr.push(e);
+      map.set(e.employeeName, arr);
+    });
+    return map;
+  }, [calendar]);
 
-  const nextMonth = () => {
-    if (month === 11) {
-      setMonth(0);
-      setYear(year + 1);
-    } else {
-      setMonth(month + 1);
-    }
-  };
-
-  const goToToday = () => {
-    setMonth(today.getMonth());
-    setYear(today.getFullYear());
-    setSelectedDate(todayStr);
-  };
-
-  // Helper to get day analysis
-  const getDayInfo = (dateStr: string) => {
-    const d = new Date(dateStr + 'T00:00:00');
+  const getDayInfo = (ds: string) => {
+    const d = new Date(ds + 'T00:00:00');
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const holiday = calendar?.holidays?.find((h) => h.date === dateStr);
-    const awayEntries = calendar?.entries.filter(
-      (e) => dateStr >= e.startDate && dateStr <= e.endDate
-    ) || [];
-
+    const holiday = calendar?.holidays?.find((h) => h.date === ds);
+    const awayEntries = calendar?.entries.filter((e) => ds >= e.startDate && ds <= e.endDate) || [];
     const awayCount = awayEntries.length;
     const teamSize = calendar?.teamSize || 1;
     const threshold = calendar?.conflictThreshold || 0.4;
-
-    // Only flag conflict when there are actually people away AND prospective absence exceeds threshold.
-    let isConflict = false;
-    let isModerate = false;
-    let awayPct = 0;
-
-    if (!isWeekend && !holiday) {
-      if (awayCount > 0) {
-        if (teamSize > 1) {
-          // If 1 or more teammates are away, check if current user taking leave exceeds capacity
-          const prospectiveAwayPct = (awayCount + 1) / teamSize;
-          awayPct = awayCount / teamSize;
-          isConflict = prospectiveAwayPct >= threshold;
-          isModerate = !isConflict;
-        } else {
-          awayPct = 1.0;
-          isModerate = true;
-        }
-      } else {
-        // Zero teammates away -> full capacity, 100% available, never a conflict
-        awayPct = 0;
-        isConflict = false;
-        isModerate = false;
-      }
+    let isConflict = false, isModerate = false, awayPct = 0;
+    if (!isWeekend && !holiday && awayCount > 0) {
+      if (teamSize > 1) {
+        awayPct = awayCount / teamSize;
+        isConflict = (awayCount + 1) / teamSize >= threshold;
+        isModerate = !isConflict;
+      } else { awayPct = 1.0; isModerate = true; }
     }
-
-    const isAvailable = !isWeekend && !holiday && awayCount === 0;
-
     return {
-      dateStr,
-      dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      dateStr: ds, dayNumber: d.getDate(), dayName: WEEKDAY_SHORT[d.getDay()],
       fullDateName: d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }),
-      isWeekend,
-      holiday,
-      awayEntries,
-      awayCount,
-      isConflict,
-      isModerate,
-      isAvailable,
+      isWeekend, holiday, awayEntries, awayCount, isConflict, isModerate,
+      isAvailable: !isWeekend && !holiday && awayCount === 0,
       awayPct: Math.round(awayPct * 100),
     };
   };
 
   const activeDay = getDayInfo(selectedDate || from);
 
-  // Status badge colors
-  const statusColors: Record<string, string> = {
-    APPROVED: '#10b981',
-    PENDING_MANAGER: '#f59e0b',
-    PENDING_HR: '#f59e0b',
-  };
+  const roleLabel = role === 'HR' ? '🏢 HR' : role === 'MANAGER' ? '👔 Manager' : '👤 Employee';
 
+  /* ── Render ──────────────────────────────────────────────── */
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1280px', margin: '0 auto' }}>
-      {/* Header */}
-      <div className="page-header" style={{ marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>▦</span> Team Calendar & Leave Availability
+    <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+
+      {/* ═══ Top Bar: Title + Controls ═══ */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
+            📅 Team Calendar
           </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            Check team presence, public holidays, and live conflict forecast before submitting your leave.
-          </p>
+          <span style={{
+            fontSize: '0.65rem', fontWeight: 700,
+            padding: '0.2rem 0.6rem', borderRadius: '99px',
+            background: role === 'HR' ? '#eff6ff' : role === 'MANAGER' ? '#faf5ff' : '#f0fdf4',
+            color: role === 'HR' ? '#2563eb' : role === 'MANAGER' ? '#7c3aed' : '#16a34a',
+          }}>
+            {roleLabel}
+          </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button className="btn btn-ghost btn-sm" onClick={goToToday} style={{ border: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={goToToday} style={{
+            padding: '0.4rem 0.9rem', borderRadius: '10px',
+            border: '1px solid var(--color-border)', background: 'white',
+            cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+            color: 'var(--color-text-secondary)', transition: 'all 0.2s',
+          }}>
             Today
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--color-surface-2)', borderRadius: '8px', padding: '0.25rem' }}>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={prevMonth}
-              disabled={!canGoPrev}
-              style={{ padding: '0.25rem 0.5rem', opacity: canGoPrev ? 1 : 0.35, cursor: canGoPrev ? 'pointer' : 'not-allowed' }}
-              title={canGoPrev ? 'Previous month' : 'Cannot view past months'}
-            >
-              ◂
-            </button>
-            <span style={{ fontWeight: 700, minWidth: '150px', textAlign: 'center', fontSize: '0.95rem', color: 'var(--color-text)' }}>
-              {monthNames[month]} {year}
+          <div style={{
+            display: 'flex', alignItems: 'center', background: 'white',
+            borderRadius: '12px', padding: '0.2rem',
+            border: '1px solid var(--color-border)',
+          }}>
+            <button onClick={prevMonth} disabled={!canGoPrev} style={{
+              width: '32px', height: '32px', borderRadius: '10px', border: 'none',
+              background: 'transparent', cursor: canGoPrev ? 'pointer' : 'not-allowed',
+              opacity: canGoPrev ? 1 : 0.3, fontSize: '1rem', color: 'var(--color-text-secondary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>‹</button>
+            <span style={{ fontWeight: 800, minWidth: '140px', textAlign: 'center', fontSize: '0.95rem' }}>
+              {MONTH_NAMES[month]} {year}
             </span>
-            <button className="btn btn-ghost btn-sm" onClick={nextMonth} style={{ padding: '0.25rem 0.5rem' }}>▸</button>
+            <button onClick={nextMonth} style={{
+              width: '32px', height: '32px', borderRadius: '10px', border: 'none',
+              background: 'transparent', cursor: 'pointer', fontSize: '1rem',
+              color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>›</button>
           </div>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => navigate(`/apply?startDate=${selectedDate}&endDate=${selectedDate}`)}
-          >
-            ✦ Apply for Leave
+          <button className="btn btn-primary btn-sm" onClick={() => navigate(`/apply?startDate=${selectedDate}&endDate=${selectedDate}`)}
+            style={{ borderRadius: '12px', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+            ✦ Apply Leave
           </button>
         </div>
       </div>
 
-      {/* Interactive Day Inspector & Availability Forecast Banner */}
-      <div
-        className="card"
-        style={{
-          marginBottom: '1.5rem',
-          padding: '1.25rem 1.5rem',
-          background: activeDay.isConflict
-            ? 'rgba(239, 68, 68, 0.08)'
-            : activeDay.holiday
-            ? 'rgba(139, 92, 246, 0.08)'
-            : activeDay.isWeekend
-            ? 'var(--color-surface-2)'
-            : 'rgba(16, 185, 129, 0.08)',
-          border: activeDay.isConflict
-            ? '1px solid rgba(239, 68, 68, 0.4)'
-            : activeDay.holiday
-            ? '1px solid rgba(139, 92, 246, 0.4)'
-            : activeDay.isWeekend
-            ? '1px solid var(--color-border)'
-            : '1px solid rgba(16, 185, 129, 0.4)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-text)' }}>
-                {activeDay.fullDateName}
-              </span>
-
-              {/* Status Pill */}
-              {activeDay.holiday && (
-                <span style={{ background: '#8b5cf6', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
-                  🏖️ Public Holiday
-                </span>
-              )}
-              {activeDay.isWeekend && (
-                <span style={{ background: '#64748b', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
-                  ☕ Weekend
-                </span>
-              )}
-              {!activeDay.isWeekend && !activeDay.holiday && (
-                activeDay.isConflict ? (
-                  <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
-                    ⚠ Overlap Conflict ({activeDay.awayPct}% Team Away)
-                  </span>
-                ) : activeDay.isModerate ? (
-                  <span style={{ background: '#f59e0b', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
-                    ⚡ Moderate Absence ({activeDay.awayEntries.length} Away)
-                  </span>
-                ) : (
-                  <span style={{ background: '#10b981', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
-                    ✓ 100% Team Available
-                  </span>
-                )
-              )}
-            </div>
-
-            {/* Verdict Explanation */}
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-              {activeDay.holiday ? (
-                <>
-                  Official holiday for <strong>{activeDay.holiday.name}</strong>. No working days are deducted from your balance.
-                </>
-              ) : activeDay.isWeekend ? (
-                <>Saturday/Sunday — Regular company weekend rest day.</>
-              ) : activeDay.isConflict ? (
-                <>
-                  <strong style={{ color: '#ef4444' }}>Can you take leave?</strong> Yes, but an <strong>overlap conflict</strong> will be flagged to your manager because {activeDay.awayEntries.map((e) => e.employeeName).join(' and ')} {activeDay.awayEntries.length > 1 ? 'are' : 'is'} already taking leave.
-                </>
-              ) : activeDay.isModerate ? (
-                <>
-                  <strong style={{ color: '#f59e0b' }}>Can you take leave?</strong> Yes. {activeDay.awayEntries[0]?.employeeName} is on leave, but team capacity remains within the allowed 40% threshold.
-                </>
-              ) : (
-                <>
-                  <strong style={{ color: '#10b981' }}>Can you take leave?</strong> Yes! Great day to apply. Full team is available with zero conflicts expected.
-                </>
-              )}
-            </p>
-
-            {/* Teammates away details */}
-            {activeDay.awayEntries.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Teammates Away:</span>
-                {activeDay.awayEntries.map((e) => (
-                  <span
-                    key={e.leaveRequestId}
-                    style={{
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '6px',
-                      padding: '0.2rem 0.5rem',
-                      fontSize: '0.75rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                    }}
-                  >
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColors[e.status] || '#10b981' }}></span>
-                    <strong>{e.employeeName}</strong> ({e.leaveType} • {e.status})
-                  </span>
-                ))}
-              </div>
-            )}
+      {/* ═══ Day Inspector Strip ═══ */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0.85rem 1.25rem', borderRadius: '16px', marginBottom: '1rem',
+        background: activeDay.isConflict ? 'linear-gradient(135deg, #fef2f2, #fee2e2)'
+          : activeDay.holiday ? 'linear-gradient(135deg, #faf5ff, #f3e8ff)'
+            : activeDay.isWeekend ? 'linear-gradient(135deg, #f8fafc, #f1f5f9)'
+              : activeDay.isModerate ? 'linear-gradient(135deg, #fffbeb, #fef3c7)'
+                : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+        border: `1px solid ${activeDay.isConflict ? '#fecaca' : activeDay.holiday ? '#e9d5ff'
+            : activeDay.isWeekend ? '#e2e8f0' : activeDay.isModerate ? '#fde68a' : '#bbf7d0'
+          }`,
+        flexWrap: 'wrap', gap: '0.75rem',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Day Badge */}
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '14px', flexShrink: 0,
+            background: activeDay.isConflict ? '#ef4444' : activeDay.holiday ? '#8b5cf6'
+              : activeDay.isWeekend ? '#94a3b8' : activeDay.isModerate ? '#f59e0b' : '#22c55e',
+            color: '#fff', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 3px 10px ${activeDay.isConflict ? 'rgba(239,68,68,0.25)' : activeDay.holiday ? 'rgba(139,92,246,0.25)' : activeDay.isModerate ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.25)'}`,
+          }}>
+            <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', lineHeight: 1 }}>{activeDay.dayName}</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, lineHeight: 1.1 }}>{activeDay.dayNumber}</span>
           </div>
-
-          {/* Quick Apply Button */}
-          {!activeDay.isWeekend && !activeDay.holiday && (
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate(`/apply?startDate=${activeDay.dateStr}&endDate=${activeDay.dateStr}`)}
-              style={{ alignSelf: 'center', whiteSpace: 'nowrap' }}
-            >
-              ✦ Apply for {activeDay.dateStr}
-            </button>
-          )}
+          <div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)' }}>{activeDay.fullDateName}</div>
+            <div style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)' }}>
+              {activeDay.holiday ? <>🏖️ <b>{activeDay.holiday.name}</b> — Holiday</>
+                : activeDay.isWeekend ? <>☕ Weekend</>
+                  : activeDay.isConflict ? <>⚠️ <b style={{ color: '#dc2626' }}>Conflict</b> — {activeDay.awayCount} away ({activeDay.awayPct}%)</>
+                    : activeDay.isModerate ? <>⚡ <b style={{ color: '#d97706' }}>Moderate</b> — {activeDay.awayCount} away</>
+                      : <>✓ <b style={{ color: '#16a34a' }}>Clear</b> — Full team available</>
+              }
+            </div>
+          </div>
+          {/* Away chips */}
+          {activeDay.awayEntries.length > 0 && activeDay.awayEntries.map((e) => (
+            <span key={e.leaveRequestId} onClick={() => navigate(`/requests/${e.leaveRequestId}`)} style={{
+              background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(226,232,240,0.8)',
+              borderRadius: '10px', padding: '0.25rem 0.6rem', fontSize: '0.7rem',
+              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              cursor: 'pointer', fontWeight: 600,
+            }}>
+              <span style={{
+                width: '18px', height: '18px', borderRadius: '6px',
+                background: getAvatarColor(e.employeeName), color: '#fff',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.5rem', fontWeight: 700, flexShrink: 0,
+              }}>{getInitials(e.employeeName)}</span>
+              <b>{e.employeeName.split(' ')[0]}</b>
+              <span style={{ color: 'var(--color-text-muted)' }}>{e.leaveType.split(' ')[0]}</span>
+            </span>
+          ))}
         </div>
+        {!activeDay.isWeekend && !activeDay.holiday && (
+          <button onClick={() => navigate(`/apply?startDate=${activeDay.dateStr}&endDate=${activeDay.dateStr}`)} style={{
+            padding: '0.45rem 1rem', borderRadius: '12px', border: 'none',
+            background: 'white', color: 'var(--color-text)', fontWeight: 700,
+            fontSize: '0.775rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+            whiteSpace: 'nowrap',
+          }}>
+            ✦ Apply for this day
+          </button>
+        )}
       </div>
 
-      {/* Main Calendar Grid Card */}
-      <div className="card" style={{ padding: '1.25rem', overflowX: 'auto', marginBottom: '2rem' }}>
-        {/* Availability Legend Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-            Schedule & Availability Matrix
+      {/* ═══ FULL-WIDTH Team Grid ═══ */}
+      <div style={{
+        background: 'white', borderRadius: '20px', padding: '1rem 1.25rem',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.03)', border: '1px solid rgba(226,232,240,0.5)',
+        marginBottom: '1rem',
+      }}>
+        {/* Legend */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>
+            Team Availability
           </h3>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span> Available
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }}></span> Moderate
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }}></span> High Conflict
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#8b5cf6' }}></span> Public Holiday
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#64748b' }}></span> Weekend
-            </span>
+          <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+            {[
+              { c: '#22c55e', l: 'Available' }, { c: '#f59e0b', l: 'Moderate' },
+              { c: '#ef4444', l: 'Conflict' }, { c: '#8b5cf6', l: 'Holiday' }, { c: '#94a3b8', l: 'Weekend' },
+            ].map(({ c, l }) => (
+              <span key={l} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />{l}
+              </span>
+            ))}
           </div>
         </div>
 
         {isLoading ? (
-          <div className="skeleton" style={{ height: '300px', width: '100%' }}></div>
+          <div className="skeleton" style={{ height: '200px', width: '100%', borderRadius: '12px' }} />
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `150px repeat(${days.length}, minmax(36px, 1fr))`,
-              gap: '2px',
-              fontSize: '0.75rem',
-            }}
-          >
-            {/* 1. Header Day Number Row */}
-            <div style={{ padding: '0.5rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>Date</div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `100px repeat(${days.length}, 1fr)`,
+            fontSize: '0.7rem',
+            gap: '1px',
+          }}>
+            {/* ─now working but some errors in TeamCalendarPage.tsx─ Day Header Row ── */}
+            <div style={{ padding: '0.25rem', fontWeight: 600, fontSize: '0.6rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'flex-end' }} />
             {days.map((d) => {
-              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-              const dayInfo = getDayInfo(dateStr);
-              const isSelected = selectedDate === dateStr;
+              const ds = fmtDate(year, month, d);
+              const info = getDayInfo(ds);
+              const isSelected = selectedDate === ds;
+              const isToday = ds === todayStr;
               return (
                 <div
-                  key={d}
-                  onClick={() => setSelectedDate(dateStr)}
+                  key={`h-${d}`}
+                  onClick={() => setSelectedDate(ds)}
+                  onMouseEnter={() => setHoveredDay(ds)}
+                  onMouseLeave={() => setHoveredDay(null)}
                   style={{
-                    padding: '0.35rem 0.15rem',
-                    textAlign: 'center',
-                    fontWeight: 700,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    background: isSelected ? 'var(--color-primary)' : dayInfo.isWeekend ? 'rgba(100, 116, 139, 0.08)' : 'transparent',
-                    color: isSelected ? '#fff' : dayInfo.isWeekend ? 'var(--color-text-muted)' : 'var(--color-text)',
-                    border: isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
-                    transition: 'all 0.15s ease',
+                    textAlign: 'center', cursor: 'pointer',
+                    padding: '0.15rem 0',
+                    borderRadius: '8px',
+                    background: isSelected ? 'var(--color-primary)' : isToday ? 'rgba(130,209,157,0.12)' : 'transparent',
+                    color: isSelected ? '#fff' : isToday ? 'var(--color-primary-dark)' : info.isWeekend ? '#b0b8c4' : 'var(--color-text)',
+                    fontWeight: isSelected || isToday ? 800 : 600,
+                    border: isToday && !isSelected ? '1.5px solid var(--color-primary)' : '1.5px solid transparent',
+                    transition: 'all 0.15s',
                   }}
-                  title={dayInfo.holiday ? dayInfo.holiday.name : dateStr}
+                  title={info.holiday ? info.holiday.name : ds}
                 >
-                  <div style={{ fontSize: '0.625rem', opacity: 0.8 }}>{dayInfo.dayName.slice(0, 2)}</div>
-                  <div style={{ fontSize: '0.8125rem' }}>{d}</div>
+                  <div style={{ fontSize: '0.5rem', opacity: 0.65, lineHeight: 1 }}>{info.dayName.slice(0, 2)}</div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, lineHeight: 1.3 }}>{d}</div>
                 </div>
               );
             })}
 
-            {/* 2. "Can I Take Leave?" Status Row */}
-            <div style={{ padding: '0.5rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center' }}>
-              <span>Availability</span>
+            {/* ── Status Row ── */}
+            <div style={{ padding: '0.2rem 0.25rem', fontSize: '0.55rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Status
             </div>
             {days.map((d) => {
-              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-              const info = getDayInfo(dateStr);
-              const isSelected = selectedDate === dateStr;
-
-              let bg = 'rgba(16, 185, 129, 0.2)';
-              let color = '#10b981';
-              let icon = '✓';
-              let tip = '100% Available — Great day for leave';
-
-              if (info.holiday) {
-                bg = 'rgba(139, 92, 246, 0.25)';
-                color = '#8b5cf6';
-                icon = '🏖️';
-                tip = `Holiday: ${info.holiday.name}`;
-              } else if (info.isWeekend) {
-                bg = 'rgba(100, 116, 139, 0.1)';
-                color = '#94a3b8';
-                icon = '•';
-                tip = 'Weekend';
-              } else if (info.isConflict) {
-                bg = 'rgba(239, 68, 68, 0.3)';
-                color = '#ef4444';
-                icon = '⚠';
-                tip = `High Conflict: ${info.awayCount} teammate(s) away`;
-              } else if (info.isModerate) {
-                bg = 'rgba(245, 158, 11, 0.25)';
-                color = '#f59e0b';
-                icon = '!';
-                tip = `1 teammate away`;
-              }
-
+              const ds = fmtDate(year, month, d);
+              const info = getDayInfo(ds);
+              const isSelected = selectedDate === ds;
+              let bg: string, clr: string, icon: string;
+              if (info.holiday) { bg = 'rgba(139,92,246,0.18)'; clr = '#8b5cf6'; icon = '🏖️'; }
+              else if (info.isWeekend) { bg = 'rgba(148,163,184,0.08)'; clr = '#b0b8c4'; icon = '·'; }
+              else if (info.isConflict) { bg = 'rgba(239,68,68,0.18)'; clr = '#ef4444'; icon = '⚠'; }
+              else if (info.isModerate) { bg = 'rgba(245,158,11,0.18)'; clr = '#f59e0b'; icon = '!'; }
+              else { bg = 'rgba(34,197,94,0.15)'; clr = '#22c55e'; icon = '✓'; }
               return (
-                <div
-                  key={`status-${d}`}
-                  onClick={() => setSelectedDate(dateStr)}
-                  style={{
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '4px',
-                    background: bg,
-                    color: color,
-                    fontWeight: 800,
-                    fontSize: '0.7rem',
-                    cursor: 'pointer',
-                    outline: isSelected ? '2px solid var(--color-primary)' : 'none',
-                    transition: 'transform 0.15s ease',
-                  }}
-                  title={`${dateStr}: ${tip}`}
-                >
+                <div key={`s-${d}`} onClick={() => setSelectedDate(ds)} style={{
+                  height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: '5px', background: bg, color: clr,
+                  fontWeight: 800, fontSize: '0.6rem', cursor: 'pointer',
+                  outline: isSelected ? `2px solid ${clr}` : 'none', outlineOffset: '1px',
+                  transition: 'all 0.15s',
+                }}>
                   {icon}
                 </div>
               );
             })}
 
-            {/* Divider */}
-            <div style={{ gridColumn: `1 / -1`, height: '1px', background: 'var(--color-border)', margin: '0.5rem 0' }}></div>
+            {/* ── Divider ── */}
+            <div style={{ gridColumn: '1 / -1', height: '1px', background: 'var(--color-border)', margin: '0.35rem 0', opacity: 0.4 }} />
 
-            {/* 3. Team Member Rows */}
+            {/* ── Team Rows ── */}
             {[...byEmployee.entries()].map(([name, entries]) => (
-              <div key={name} style={{ display: 'contents' }}>
-                <div
-                  style={{
-                    padding: '0.5rem',
-                    fontWeight: 600,
-                    color: 'var(--color-text)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                  title={name}
-                >
-                  <span
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '50%',
-                      background: 'var(--color-primary)',
-                      color: '#fff',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {name.charAt(0)}
-                  </span>
-                  <span>{name}</span>
+              <div key={name} style={{ display: 'contents' }}
+                onMouseEnter={() => setHoveredRow(name)} onMouseLeave={() => setHoveredRow(null)}>
+                {/* Name cell */}
+                <div style={{
+                  padding: '0.25rem 0.35rem', fontWeight: 600, fontSize: '0.7rem',
+                  color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden',
+                  textOverflow: 'ellipsis', display: 'flex', alignItems: 'center',
+                  gap: '0.3rem',
+                  background: hoveredRow === name ? 'rgba(99,102,241,0.03)' : 'transparent',
+                  borderRadius: '8px',
+                }} title={name}>
+                  <span style={{
+                    width: '20px', height: '20px', borderRadius: '7px', flexShrink: 0,
+                    background: getAvatarColor(name), color: '#fff',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.5rem', fontWeight: 700,
+                  }}>{getInitials(name)}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
                 </div>
 
+                {/* Day cells */}
                 {days.map((d) => {
-                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                  const isSelected = selectedDate === dateStr;
+                  const ds = fmtDate(year, month, d);
+                  const isSelected = selectedDate === ds;
                   const date = new Date(year, month, d);
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                  const entry = entries.find((e) => dateStr >= e.startDate && dateStr <= e.endDate);
-                  const holiday = calendar?.holidays?.find((h) => h.date === dateStr);
+                  const entry = entries.find((e) => ds >= e.startDate && ds <= e.endDate);
+                  const holiday = calendar?.holidays?.find((h) => h.date === ds);
+                  const sc = entry ? (STATUS_CONFIG[entry.status] || STATUS_CONFIG.APPROVED) : null;
+                  const isStart = entry && ds === entry.startDate;
+                  const isEnd = entry && ds === entry.endDate;
 
                   return (
                     <div
                       key={`${name}-${d}`}
-                      onClick={() => setSelectedDate(dateStr)}
+                      onClick={() => { setSelectedDate(ds); if (entry) navigate(`/requests/${entry.leaveRequestId}`); }}
+                      onMouseEnter={() => setHoveredDay(ds)}
+                      onMouseLeave={() => setHoveredDay(null)}
                       style={{
-                        height: '32px',
-                        background: entry
-                          ? entry.status === 'APPROVED'
-                            ? 'rgba(16, 185, 129, 0.4)'
-                            : 'rgba(245, 158, 11, 0.4)'
-                          : holiday
-                          ? 'rgba(139, 92, 246, 0.08)'
-                          : isWeekend
-                          ? 'rgba(100, 116, 139, 0.05)'
-                          : isSelected
-                          ? 'rgba(99, 102, 241, 0.08)'
-                          : 'transparent',
-                        borderRadius: '4px',
-                        margin: '1px 0',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        color: entry?.status === 'APPROVED' ? '#047857' : entry ? '#b45309' : 'inherit',
-                        borderLeft: entry && dateStr === entry.startDate ? `3px solid ${statusColors[entry.status]}` : 'none',
-                        outline: isSelected ? '1px solid rgba(99, 102, 241, 0.5)' : 'none',
-                        transition: 'all 0.15s ease',
+                        height: '24px', margin: '1px 0',
+                        background: entry ? sc?.bg
+                          : hoveredDay === ds || hoveredRow === name ? 'rgba(99,102,241,0.03)'
+                            : holiday ? 'rgba(139,92,246,0.04)'
+                              : isWeekend ? 'rgba(148,163,184,0.03)' : 'transparent',
+                        borderRadius: entry
+                          ? isStart && isEnd ? '8px' : isStart ? '8px 0 0 8px' : isEnd ? '0 8px 8px 0' : '0'
+                          : '4px',
+                        cursor: entry ? 'pointer' : 'default',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.55rem', fontWeight: 700, color: sc?.color || 'inherit',
+                        borderLeft: isStart ? `2.5px solid ${sc?.dot}` : 'none',
+                        outline: isSelected ? '1.5px solid rgba(99,102,241,0.3)' : 'none',
+                        transition: 'background 0.12s',
                       }}
-                      title={
-                        entry
-                          ? `${name}: ${entry.leaveType} (${entry.status}) from ${entry.startDate} to ${entry.endDate}`
-                          : holiday
-                          ? `Holiday: ${holiday.name}`
-                          : `${name} working on ${dateStr}`
-                      }
+                      title={entry ? `${name}: ${entry.leaveType} (${sc?.label}) ${entry.startDate} → ${entry.endDate}` : holiday ? `Holiday: ${holiday.name}` : `${name} available`}
                     >
-                      {entry && dateStr === entry.startDate && (
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>
-                          {entry.leaveType.split(' ')[0]}
-                        </span>
-                      )}
+                      {isStart && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 1px' }}>{entry?.leaveType.split(' ')[0]}</span>}
                     </div>
                   );
                 })}
               </div>
             ))}
+
+            {/* Empty */}
+            {byEmployee.size === 0 && !isLoading && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--color-text-muted)' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎯</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>No team leave data for this period</div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Public Holidays & Long Weekend Planner in Current Month */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>🏖️</span> Public Holidays in {monthNames[month]} {year}
+      {/* ═══ Bottom Cards Row: Holidays + Stats + Tips ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+        {/* Holidays */}
+        <div style={{
+          background: 'white', borderRadius: '18px', padding: '1.15rem 1.25rem',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.025)', border: '1px solid rgba(226,232,240,0.5)',
+        }}>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            🏖️ Holidays in {MONTH_NAMES[month]}
           </h3>
           {calendar?.holidays && calendar.holidays.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {calendar.holidays.map((h) => (
-                <div
-                  key={h.date}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0.5rem 0.75rem',
-                    background: 'var(--color-surface-2)',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                  }}
-                >
-                  <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{h.name}</span>
-                  <span style={{ color: '#8b5cf6', fontWeight: 700 }}>{h.date}</span>
+                <div key={h.date} onClick={() => setSelectedDate(h.date)} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '0.45rem 0.65rem', background: 'rgba(139,92,246,0.06)',
+                  borderRadius: '10px', fontSize: '0.775rem', cursor: 'pointer',
+                  border: '1px solid rgba(139,92,246,0.08)',
+                }}>
+                  <span style={{ fontWeight: 600 }}>{h.name}</span>
+                  <span style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.7rem', background: 'rgba(139,92,246,0.1)', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>
+                    {h.date.split('-').reverse().join('/')}
+                  </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              No public holidays scheduled in {monthNames[month]}.
-            </p>
+            <p style={{ fontSize: '0.775rem', color: 'var(--color-text-muted)', margin: 0 }}>No holidays this month</p>
           )}
         </div>
 
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>💡</span> Pro-Tip for Applying
+        {/* Team Stats - Manager/HR only */}
+        {(role === 'MANAGER' || role === 'HR') && (
+          <div style={{
+            background: 'white', borderRadius: '18px', padding: '1.15rem 1.25rem',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.025)', border: '1px solid rgba(226,232,240,0.5)',
+          }}>
+            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              📊 {role === 'HR' ? 'Org' : 'Team'} Snapshot
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+              {[
+                { v: calendar?.teamSize || 0, l: 'Team Size', c: '#16a34a', bg: 'rgba(34,197,94,0.08)' },
+                { v: activeDay.awayCount, l: 'Away Now', c: '#d97706', bg: 'rgba(245,158,11,0.08)' },
+                { v: `${Math.round((calendar?.conflictThreshold || 0.4) * 100)}%`, l: 'Threshold', c: '#4f46e5', bg: 'rgba(99,102,241,0.08)' },
+                { v: calendar?.holidays?.length || 0, l: 'Holidays', c: '#7c3aed', bg: 'rgba(139,92,246,0.08)' },
+              ].map(({ v, l, c, bg }) => (
+                <div key={l} style={{ background: bg, borderRadius: '12px', padding: '0.65rem 0.5rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: c }}>{v}</div>
+                  <div style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tips */}
+        <div style={{
+          background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)', borderRadius: '18px', padding: '1.15rem 1.25rem',
+          border: '1px solid rgba(130,209,157,0.2)',
+        }}>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 0.65rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            💡 Quick Tips
           </h3>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
-            Click on any day with a green checkmark (<strong>✓</strong>) to pre-populate your leave request with zero conflicts.
-            Avoid overlapping days marked with a red warning (<strong>⚠</strong>) to ensure fast, hassle-free manager approval.
-          </p>
+          <div style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.3rem' }}>
+              <span>✓</span> <span>Click any <b>green</b> day for conflict-free leave</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.3rem' }}>
+              <span>⚠</span> <span>Red = high overlap, may need justification</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <span>📊</span> <span>Click a leave bar to see the full request</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
