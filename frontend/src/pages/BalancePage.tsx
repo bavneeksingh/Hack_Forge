@@ -54,7 +54,7 @@ export default function BalancePage() {
             </div>
 
             {/* Progress bar */}
-            <div style={{ marginTop: '0.75rem', height: '6px', borderRadius: '3px', background: 'var(--color-surface)', overflow: 'hidden' }}>
+            <div style={{ marginTop: '0.75rem', height: '6px', borderRadius: '3px', background: 'var(--color-border)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: '3px',
                 background: b.available > 0 ? 'var(--gradient-primary)' : 'var(--color-danger)',

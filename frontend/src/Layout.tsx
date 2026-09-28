@@ -44,7 +44,7 @@ export default function Layout() {
       <aside
         style={{
           width: '260px',
-          background: 'var(--color-surface-2)',
+          background: '#FFFFFF',
           borderRight: '1px solid var(--color-border)',
           display: 'flex',
           flexDirection: 'column',
@@ -58,21 +58,19 @@ export default function Layout() {
             style={{
               fontSize: '1.25rem',
               fontWeight: 800,
-              background: 'var(--gradient-primary)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'var(--color-text)',
               letterSpacing: '-0.03em',
             }}
           >
-            ✦ LeaveFlow
+            <span style={{ color: 'var(--color-primary)' }}>✦</span> LeaveFlow
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', fontWeight: 600 }}>
             Leave Management System
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1 }}>
+        <nav style={{ flex: 1, padding: '0 0.75rem' }}>
           {items.map((item) => (
             <NavLink
               key={item.path}
@@ -81,19 +79,19 @@ export default function Layout() {
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 1.25rem',
-                margin: '0.125rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.875rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                background: isActive ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
+                gap: '0.85rem',
+                padding: '0.85rem 1.25rem',
+                margin: '0.25rem 0',
+                borderRadius: '99px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)',
+                background: isActive ? 'var(--color-primary)' : 'transparent',
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
               })}
             >
-              <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>{item.icon}</span>
+              <span style={{ fontSize: '1.2rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
@@ -102,18 +100,30 @@ export default function Layout() {
         {/* User info */}
         <div
           style={{
-            padding: '1rem 1.25rem',
+            padding: '1.5rem',
             borderTop: '1px solid var(--color-border)',
             marginTop: 'auto',
           }}
         >
-          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>
-            {user?.name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'var(--color-primary)', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 'bold', fontSize: '1.1rem'
+            }}>
+              {user?.name?.charAt(0)}
+            </div>
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                {user?.name}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                {user?.role}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
-            {user?.role} • {user?.teamName || 'No team'}
-          </div>
-          <button onClick={handleLogout} className="btn btn-ghost btn-sm" style={{ width: '100%' }}>
+          <button onClick={handleLogout} className="btn btn-ghost btn-sm" style={{ width: '100%', border: '1px solid var(--color-border)' }}>
             Sign out
           </button>
         </div>
