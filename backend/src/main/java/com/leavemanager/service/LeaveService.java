@@ -390,14 +390,14 @@ public class LeaveService {
         return toDto(request);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<BalanceDto> getAllBalances() {
         return balanceService.getAllBalances().stream()
                 .map(this::toBalanceDto)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<BalanceDto> getEmployeeBalances(Long employeeId) {
         return balanceService.getEmployeeBalances(employeeId).stream()
                 .map(this::toBalanceDto)

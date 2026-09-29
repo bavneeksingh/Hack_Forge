@@ -7,6 +7,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import org.springframework.scheduling.annotation.Async;
+
 @Service
 public class EmailService {
 
@@ -17,6 +19,7 @@ public class EmailService {
         this.emailSender = emailSender;
     }
 
+    @Async
     public void sendStatusChangeEmail(LeaveRequest request) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

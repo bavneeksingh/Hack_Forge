@@ -283,7 +283,7 @@ export default function TeamCalendarPage() {
             fontSize: '0.7rem',
             gap: '1px',
           }}>
-            {/* ─now working but some errors in TeamCalendarPage.tsx─ Day Header Row ── */}
+            {/* ── Day Header Row ── */}
             <div style={{ padding: '0.25rem', fontWeight: 600, fontSize: '0.6rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'flex-end' }} />
             {days.map((d) => {
               const ds = fmtDate(year, month, d);
